@@ -169,7 +169,7 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
       const factoryAddress = getFactoryAddress(chainId);
       await saveSplit(
         splitAddress,
-        address,
+        ownerAddress,
         factoryAddress,
         recipients.map((r) => ({
           wallet_address: r.address,
