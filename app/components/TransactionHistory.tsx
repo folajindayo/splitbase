@@ -5,6 +5,7 @@ import { useAppKitProvider, useAppKitNetwork } from "@reown/appkit/react";
 import { BrowserProvider, Contract, formatEther } from "ethers";
 import { SPLIT_BASE_ABI } from "@/lib/contracts";
 import { formatDate, getBaseScanUrl, truncateAddress } from "@/lib/utils";
+import { DEFAULT_CHAIN_ID, QUERY_BLOCK_LIMIT } from "@/lib/constants";
 
 interface RecipientPayment {
   recipient: string;
@@ -28,7 +29,7 @@ export default function TransactionHistory({ splitAddress }: TransactionHistoryP
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : 84532;
+  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
 
   useEffect(() => {
     loadTransactions();
@@ -56,11 +57,11 @@ export default function TransactionHistory({ splitAddress }: TransactionHistoryP
 
       // Query FundsDistributed events
       const distributedFilter = contract.filters.FundsDistributed();
-      const distributedEvents = await contract.queryFilter(distributedFilter, -10000);
+      const distributedEvents = await contract.queryFilter(distributedFilter, QUERY_BLOCK_LIMIT);
 
       // Query RecipientPaid events
       const paidFilter = contract.filters.RecipientPaid();
-      const paidEvents = await contract.queryFilter(paidFilter, -10000);
+      const paidEvents = await contract.queryFilter(paidFilter, QUERY_BLOCK_LIMIT);
 
       // Group RecipientPaid events by transaction hash
       const paymentsByTx = new Map<string, RecipientPayment[]>();

@@ -1,7 +1,8 @@
 "use client";
 
 import { useAppKitNetwork } from "@reown/appkit/react";
-import { NETWORK_NAMES, DEFAULT_CHAIN_ID } from "@/lib/constants";
+import { baseSepolia } from "@reown/appkit/networks";
+import { NETWORK_NAMES } from "@/lib/constants";
 
 export default function NetworkChecker() {
   const { caipNetwork, switchNetwork } = useAppKitNetwork();
@@ -15,7 +16,7 @@ export default function NetworkChecker() {
 
   const handleSwitchNetwork = async () => {
     try {
-      await switchNetwork({ chainId: DEFAULT_CHAIN_ID });
+      await switchNetwork(baseSepolia);
     } catch (error) {
       console.error("Failed to switch network:", error);
     }

@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { createAppKit } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { baseSepolia, base } from "@reown/appkit/networks";
+import { APP_METADATA } from "@/lib/constants";
 
 // Get projectId from environment
 const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID;
@@ -14,10 +15,10 @@ if (!projectId) {
 
 // Configure metadata
 const metadata = {
-  name: "SplitBase",
-  description: "Onchain split payment dashboard powered by Base",
-  url: typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
-  icons: ["https://avatars.githubusercontent.com/u/37784886"],
+  name: APP_METADATA.name,
+  description: APP_METADATA.description,
+  url: APP_METADATA.url,
+  icons: [APP_METADATA.icon],
 };
 
 // Create the AppKit instance - only runs once at module level

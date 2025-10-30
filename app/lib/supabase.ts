@@ -19,8 +19,8 @@ export interface Split {
 }
 
 export interface Recipient {
-  id: string;
-  split_id: string;
+  id?: string;
+  split_id?: string;
   wallet_address: string;
   percentage: number;
 }
