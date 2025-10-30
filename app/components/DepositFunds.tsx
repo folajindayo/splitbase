@@ -28,8 +28,15 @@ export default function DepositFunds({ splitAddress, onSuccess }: DepositFundsPr
     setError("");
 
     try {
+      // Prefer window.ethereum if available (direct connection)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const provider = new BrowserProvider(walletProvider as any);
+      let providerToUse: any = walletProvider;
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        providerToUse = (window as any).ethereum;
+      }
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const provider = new BrowserProvider(providerToUse as any);
       const signer = await provider.getSigner();
 
       const tx = await signer.sendTransaction({
