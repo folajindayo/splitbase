@@ -9,6 +9,7 @@ import { truncateAddress, formatDate, getBaseScanUrl } from "@/lib/utils";
 import CreateSplitModal from "@/components/CreateSplitModal";
 import NetworkChecker from "@/components/NetworkChecker";
 import { useAppKitNetwork } from "@reown/appkit/react";
+import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
 export default function Dashboard() {
   const { address, isConnected } = useAppKitAccount();
@@ -18,7 +19,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : 84532;
+  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
 
   useEffect(() => {
     if (!isConnected) {

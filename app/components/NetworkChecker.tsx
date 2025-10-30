@@ -1,17 +1,13 @@
 "use client";
 
 import { useAppKitNetwork } from "@reown/appkit/react";
-
-const SUPPORTED_NETWORKS = {
-  84532: "Base Sepolia",
-  8453: "Base Mainnet",
-};
+import { NETWORK_NAMES, DEFAULT_CHAIN_ID } from "@/lib/constants";
 
 export default function NetworkChecker() {
   const { caipNetwork, switchNetwork } = useAppKitNetwork();
   
   const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : null;
-  const isSupported = chainId && Object.keys(SUPPORTED_NETWORKS).includes(chainId.toString());
+  const isSupported = chainId && Object.keys(NETWORK_NAMES).includes(chainId.toString());
 
   if (isSupported || !chainId) {
     return null;
@@ -19,7 +15,7 @@ export default function NetworkChecker() {
 
   const handleSwitchNetwork = async () => {
     try {
-      await switchNetwork({ chainId: 84532 }); // Switch to Base Sepolia by default
+      await switchNetwork({ chainId: DEFAULT_CHAIN_ID });
     } catch (error) {
       console.error("Failed to switch network:", error);
     }

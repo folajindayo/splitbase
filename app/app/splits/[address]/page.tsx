@@ -9,6 +9,7 @@ import { getSplitByAddress } from "@/lib/splits";
 import { truncateAddress, getBaseScanUrl, copyToClipboard } from "@/lib/utils";
 import DepositFunds from "@/components/DepositFunds";
 import TransactionHistory from "@/components/TransactionHistory";
+import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
 export default function SplitDetailsPage() {
   const params = useParams();
@@ -25,7 +26,7 @@ export default function SplitDetailsPage() {
   const [copied, setCopied] = useState(false);
   const [distributing, setDistributing] = useState(false);
 
-  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : 84532;
+  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
 
   useEffect(() => {
     loadSplitData();
