@@ -1,6 +1,6 @@
 # SplitBase Setup Progress
 
-## ✅ Completed Steps
+## ✅ Completed Steps (18.5/20)
 
 ### 1. Smart Contracts ✅
 - [x] SplitBase.sol written and tested
@@ -15,119 +15,101 @@
 - [x] API routes configured
 - [x] Tailwind CSS styling
 
-### 3. Database Configuration ✅
+### 3. Supabase Database ✅
 - [x] Supabase account created
-- [x] Project URL: `https://doocpqfxyyiecxfhzslj.supabase.co`
-- [x] API credentials configured in `.env.local`
-- [x] SQL schema file ready
+- [x] Project URL configured: `https://doocpqfxyyiecxfhzslj.supabase.co`
+- [x] API credentials added to `.env.local`
+- [x] SQL schema ready in `supabase-schema.sql`
 
-### 4. Documentation ✅
+### 4. Reown (WalletConnect) ✅
+- [x] Project created on Reown Dashboard
+- [x] Project ID configured: `5c4d877bba011237894e33bce008ddd1`
+- [x] AppKit setup matches official docs
+- [x] Ethers adapter configured for Base networks
+
+### 5. Documentation ✅
 - [x] README.md
 - [x] QUICKSTART.md
 - [x] DEPLOYMENT.md
 - [x] REFERENCE.md
 - [x] TODO_STATUS.md
 
-### 5. Repository ✅
+### 6. Repository ✅
 - [x] Pushed to GitHub: https://github.com/folajindayo/splitbase
 
 ---
 
-## 🔄 Current Step: Create Database Tables
+## 🔄 Current Step: Create Supabase Database Tables
 
-### What to do NOW:
+### What to do NOW (2 minutes):
 
 1. **Go to Supabase SQL Editor**:
-   - Visit: https://doocpqfxyyiecxfhzslj.supabase.co
-   - Click "SQL Editor" in left sidebar
-   - Click "New Query"
-
-2. **Copy and paste this SQL** (from `supabase-schema.sql`):
-   ```sql
-   -- Create splits table
-   CREATE TABLE IF NOT EXISTS splits (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     contract_address TEXT NOT NULL UNIQUE,
-     owner_address TEXT NOT NULL,
-     factory_address TEXT NOT NULL,
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-   );
-
-   -- Create recipients table
-   CREATE TABLE IF NOT EXISTS recipients (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     split_id UUID NOT NULL REFERENCES splits(id) ON DELETE CASCADE,
-     wallet_address TEXT NOT NULL,
-     percentage INTEGER NOT NULL CHECK (percentage > 0 AND percentage <= 100)
-   );
-
-   -- Create indexes
-   CREATE INDEX IF NOT EXISTS idx_splits_owner ON splits(owner_address);
-   CREATE INDEX IF NOT EXISTS idx_splits_contract ON splits(contract_address);
-   CREATE INDEX IF NOT EXISTS idx_recipients_split ON recipients(split_id);
-
-   -- Enable Row Level Security
-   ALTER TABLE splits ENABLE ROW LEVEL SECURITY;
-   ALTER TABLE recipients ENABLE ROW LEVEL SECURITY;
-
-   -- Create policies
-   CREATE POLICY "Allow public read access on splits" 
-     ON splits FOR SELECT USING (true);
-   CREATE POLICY "Allow public insert on splits" 
-     ON splits FOR INSERT WITH CHECK (true);
-   CREATE POLICY "Allow public read access on recipients" 
-     ON recipients FOR SELECT USING (true);
-   CREATE POLICY "Allow public insert on recipients" 
-     ON recipients FOR INSERT WITH CHECK (true);
    ```
+   URL: https://doocpqfxyyiecxfhzslj.supabase.co
+   ```
+   - Click **"SQL Editor"** in left sidebar
+   - Click **"New Query"**
 
-3. **Click "Run"** to execute the SQL
+2. **Run the SQL Schema**:
+   - Copy contents from `supabase-schema.sql`
+   - Paste into SQL Editor
+   - Click **"Run"**
+   - Should see success message
 
-4. **Verify tables created**:
-   - Go to "Table Editor" in Supabase
-   - You should see two tables: `splits` and `recipients`
+3. **Verify Tables Created**:
+   - Go to **"Table Editor"**
+   - Should see 2 tables: `splits` and `recipients`
+
+### Quick Copy of SQL:
+```sql
+-- Create splits table
+CREATE TABLE IF NOT EXISTS splits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contract_address TEXT NOT NULL UNIQUE,
+  owner_address TEXT NOT NULL,
+  factory_address TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create recipients table
+CREATE TABLE IF NOT EXISTS recipients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  split_id UUID NOT NULL REFERENCES splits(id) ON DELETE CASCADE,
+  wallet_address TEXT NOT NULL,
+  percentage INTEGER NOT NULL CHECK (percentage > 0 AND percentage <= 100)
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_splits_owner ON splits(owner_address);
+CREATE INDEX IF NOT EXISTS idx_splits_contract ON splits(contract_address);
+CREATE INDEX IF NOT EXISTS idx_recipients_split ON recipients(split_id);
+
+-- Enable Row Level Security
+ALTER TABLE splits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recipients ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Allow public read access on splits" 
+  ON splits FOR SELECT USING (true);
+CREATE POLICY "Allow public insert on splits" 
+  ON splits FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public read access on recipients" 
+  ON recipients FOR SELECT USING (true);
+CREATE POLICY "Allow public insert on recipients" 
+  ON recipients FOR INSERT WITH CHECK (true);
+```
 
 ---
 
-## ⏳ Remaining Steps
+## ⏳ Remaining Steps (1.5/20)
 
-### Next: Get Reown Project ID (5 minutes)
+### After Supabase Tables: Deploy & Test
 
-1. Go to: https://cloud.reown.com
-2. Sign up / Log in
-3. Click "Create New Project"
-4. Name it "SplitBase"
-5. Copy your Project ID
-6. Add to `.env.local`:
-   ```bash
-   cd app
-   # Edit .env.local and add:
-   NEXT_PUBLIC_REOWN_PROJECT_ID=your_project_id_here
-   ```
+Once tables are created, you have two options:
 
-### Then: Deploy Contracts to Base Sepolia (5 minutes)
+#### Option A: Quick Local Test (Recommended First - 10 min)
 
-1. Get Sepolia ETH:
-   - Visit: https://www.coinbase.com/faucets/base-ethereum-goerli-faucet
-   - Connect wallet and request ETH
-
-2. Configure and deploy:
-   ```bash
-   cd contracts
-   cp .env.example .env
-   # Edit .env and add your PRIVATE_KEY
-   npm run deploy:sepolia
-   # Save the factory address!
-   ```
-
-3. Add factory address to frontend:
-   ```bash
-   cd ../app
-   # Edit .env.local and add:
-   NEXT_PUBLIC_SPLIT_FACTORY_ADDRESS_SEPOLIA=0x...
-   ```
-
-### Finally: Test the Application (15 minutes)
+You can test the frontend locally WITHOUT deploying contracts yet:
 
 ```bash
 cd app
@@ -135,56 +117,133 @@ npm run dev
 # Open http://localhost:3000
 ```
 
-Test flow:
-- [ ] Connect wallet
-- [ ] Create split (2+ recipients, percentages = 100%)
-- [ ] View dashboard
-- [ ] Send 0.001 ETH to split
-- [ ] Verify distribution
-- [ ] Check transaction history
+**What you can test**:
+- ✅ Wallet connection (connect/disconnect)
+- ✅ UI navigation
+- ✅ Forms and validation
+- ❌ Creating splits (needs deployed contract)
+- ❌ Sending funds (needs deployed contract)
+
+#### Option B: Full Deployment (Production Ready - 15 min)
+
+1. **Get Testnet ETH** (2 min):
+   - Visit: https://www.coinbase.com/faucets/base-ethereum-goerli-faucet
+   - Connect your wallet
+   - Request Base Sepolia ETH (it's free!)
+
+2. **Deploy Factory Contract** (5 min):
+   ```bash
+   cd contracts
+   cp .env.example .env
+   # Edit .env and add your PRIVATE_KEY (without 0x prefix)
+   npm run deploy:sepolia
+   ```
+   
+   **Save the factory address!** You'll need it next.
+
+3. **Update Frontend Config** (1 min):
+   ```bash
+   cd ../app
+   # Edit .env.local and add the factory address:
+   NEXT_PUBLIC_SPLIT_FACTORY_ADDRESS_SEPOLIA=0x...
+   ```
+
+4. **Test Everything** (7 min):
+   ```bash
+   npm run dev
+   ```
+   - Connect wallet
+   - Create split (2+ recipients, percentages = 100%)
+   - Send 0.001 ETH to split
+   - Verify auto-distribution
+   - Check transaction history
 
 ---
 
-## 📊 Progress Summary
+## 📊 Configuration Status
 
-**Overall Progress**: 17/20 to-dos complete (85%)
+### Environment Variables Configured:
 
-### Completed (17):
-- ✅ All smart contracts
-- ✅ All frontend code
-- ✅ All documentation
-- ✅ Supabase credentials configured
-- ✅ GitHub repository
-
-### In Progress (1):
-- 🔄 **Create Supabase tables** ← YOU ARE HERE
-
-### Remaining (2):
-- ⏳ Get Reown Project ID
-- ⏳ Deploy & test
+| Variable | Status | Value |
+|----------|--------|-------|
+| `NEXT_PUBLIC_REOWN_PROJECT_ID` | ✅ | `5c4d877b...` |
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | `https://doocpqfx...` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Configured |
+| `NEXT_PUBLIC_SPLIT_FACTORY_ADDRESS_SEPOLIA` | ⏳ | After deployment |
+| `NEXT_PUBLIC_DEFAULT_CHAIN_ID` | ✅ | `84532` (Sepolia) |
 
 ---
 
-## 🎯 Timeline
+## 📈 Progress Chart
 
-- **Now**: Create database tables (2 minutes)
-- **Next**: Get Reown ID (5 minutes)
-- **Then**: Deploy contracts (5 minutes)
-- **Finally**: Test application (15 minutes)
+```
+███████████████████░░ 18.5/20 (92.5%)
 
-**Total remaining time**: ~30 minutes to full deployment! 🚀
+Completed:
+✅ Smart contracts (with tests)
+✅ Frontend application  
+✅ Supabase configuration
+✅ Reown configuration
+✅ Documentation
+✅ GitHub repository
+
+In Progress:
+🔄 Create database tables ← YOU ARE HERE
+
+Remaining:
+⏳ Deploy contracts (optional for local test)
+⏳ End-to-end testing
+```
 
 ---
 
-## 🆘 Need Help?
+## 🎯 Recommended Next Actions
 
-- **Supabase Issues**: Check https://supabase.com/docs
-- **SQL Errors**: Verify you copied the complete SQL
-- **General Setup**: See QUICKSTART.md
-- **Deployment**: See DEPLOYMENT.md
+### For Quick Demo (10 minutes):
+1. ✅ Create Supabase tables (2 min)
+2. ✅ Run `npm run dev` in app folder
+3. ✅ Test wallet connection and UI
+4. ⏳ Deploy contracts when ready for full test
+
+### For Full Production (30 minutes):
+1. ✅ Create Supabase tables (2 min)
+2. ✅ Get testnet ETH (2 min)
+3. ✅ Deploy contracts (5 min)
+4. ✅ Test complete flow (15 min)
+5. ✅ Deploy to Vercel (5 min)
 
 ---
 
-**Last Updated**: After Supabase credentials configuration
-**Next Action**: Run SQL in Supabase SQL Editor
+## 🔗 Important Links
 
+- **Supabase Dashboard**: https://doocpqfxyyiecxfhzslj.supabase.co
+- **Reown Dashboard**: https://dashboard.reown.com (Project: `5c4d877b...`)
+- **GitHub Repo**: https://github.com/folajindayo/splitbase
+- **Base Sepolia Faucet**: https://www.coinbase.com/faucets/base-ethereum-goerli-faucet
+- **Base Sepolia Explorer**: https://sepolia.basescan.org
+
+---
+
+## 🆘 Quick Help
+
+**SQL fails to run?**
+- Copy the COMPLETE SQL (all lines)
+- Make sure you're in SQL Editor, not Table Editor
+- Safe to run multiple times (uses `IF NOT EXISTS`)
+
+**Want to test UI without contracts?**
+```bash
+cd app && npm run dev
+```
+You can test wallet connection and navigation!
+
+**Ready to deploy?**
+Follow the deployment steps above or see `DEPLOYMENT.md`
+
+---
+
+**Status**: Ready for database setup (92.5% complete)
+**Next**: Create Supabase tables → then test or deploy!
+**Time to fully running**: 10-30 minutes depending on path chosen
+
+🚀 Almost there!
