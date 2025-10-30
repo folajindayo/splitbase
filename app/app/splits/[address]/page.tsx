@@ -94,8 +94,16 @@ export default function SplitDetailsPage() {
 
     try {
       setDistributing(true);
+      
+      // Prefer window.ethereum if available (direct connection)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const provider = new BrowserProvider(walletProvider as any);
+      let providerToUse: any = walletProvider;
+      if (typeof window !== 'undefined' && window.ethereum) {
+        providerToUse = window.ethereum;
+      }
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const provider = new BrowserProvider(providerToUse as any);
       const signer = await provider.getSigner();
       
       const { distributeFunds } = await import("@/lib/contracts");
