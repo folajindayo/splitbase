@@ -98,6 +98,14 @@ export default function DepositFunds({ splitAddress, onSuccess }: DepositFundsPr
         <p className="text-xs text-gray-400">
           Funds auto-distribute to recipients
         </p>
+
+        {/* Manual Deposit */}
+        <div className="border-t border-gray-200 pt-3 mt-4">
+          <p className="text-xs text-gray-500 mb-2">OR Deposit manually</p>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-xs font-mono text-gray-900 break-all">{splitAddress}</p>
+          </div>
+        </div>
       </div>
     </div>
   );

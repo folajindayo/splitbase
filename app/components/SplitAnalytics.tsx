@@ -151,17 +151,17 @@ export default function SplitAnalytics({ splitAddress, walletProvider }: Analyti
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-6 text-white">
           <div className="text-sm opacity-90">Total Distributions</div>
           <div className="text-3xl font-bold mt-2">{distributions.length}</div>
         </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-br from-gray-600 to-gray-700 rounded-xl p-6 text-white">
           <div className="text-sm opacity-90">Total Distributed</div>
           <div className="text-3xl font-bold mt-2">
             {distributions.reduce((sum, d) => sum + parseFloat(d.amount), 0).toFixed(4)} ETH
           </div>
         </div>
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl p-6 text-white">
           <div className="text-sm opacity-90">Active Recipients</div>
           <div className="text-3xl font-bold mt-2">{recipientStats.length}</div>
         </div>
@@ -198,33 +198,6 @@ export default function SplitAnalytics({ splitAddress, walletProvider }: Analyti
             <span>More</span>
           </div>
         </div>
-      </div>
-
-      {/* Recipient Leaderboard */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4">🏆 Top Recipients</h3>
-        {recipientStats.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No distribution data yet</p>
-        ) : (
-          <div className="space-y-3">
-            {recipientStats.map((stat, index) => (
-              <div key={stat.address} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
-                  index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-600' : 'bg-gray-300'
-                }`}>
-                  {index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-mono text-gray-900 truncate">{stat.address}</div>
-                  <div className="text-xs text-gray-500">{stat.distributionCount} distributions</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-semibold text-gray-900">{stat.totalReceived} ETH</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Recent Activity */}

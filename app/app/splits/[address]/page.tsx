@@ -10,7 +10,6 @@ import { truncateAddress, getBaseScanUrl, copyToClipboard } from "@/lib/utils";
 import DepositFunds from "@/components/DepositFunds";
 import TransactionHistory from "@/components/TransactionHistory";
 import SplitAnalytics from "@/components/SplitAnalytics";
-import QRCodeGenerator from "@/components/QRCodeGenerator";
 import ShareableSplit from "@/components/ShareableSplit";
 import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
@@ -247,9 +246,6 @@ export default function SplitDetailsPage() {
           <div className="space-y-6">
             {/* Deposit Card */}
             {isConnected && <DepositFunds splitAddress={splitAddress} onSuccess={loadSplitData} />}
-
-            {/* QR Code Generator */}
-            <QRCodeGenerator address={splitAddress} />
 
             {/* Shareable Split */}
             <ShareableSplit 
