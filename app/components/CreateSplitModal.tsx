@@ -6,6 +6,7 @@ import { BrowserProvider } from "ethers";
 import { createSplit, getFactoryAddress } from "@/lib/contracts";
 import { saveSplit } from "@/lib/splits";
 import { isValidAddress, validatePercentages, hasDuplicateAddresses } from "@/lib/utils";
+import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
 // Extend Window interface for ethereum provider
 declare global {
