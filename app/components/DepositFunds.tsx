@@ -58,12 +58,12 @@ export default function DepositFunds({ splitAddress, onSuccess }: DepositFundsPr
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold mb-4">Deposit Funds</h2>
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h2 className="text-sm font-medium text-gray-500 mb-4">Deposit Funds</h2>
       
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs text-gray-500 mb-2">
             Amount (ETH)
           </label>
           <input
@@ -76,13 +76,13 @@ export default function DepositFunds({ splitAddress, onSuccess }: DepositFundsPr
               setAmount(e.target.value);
               setError("");
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
             disabled={loading}
           />
         </div>
 
         {error && (
-          <div className="text-sm text-red-600">
+          <div className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
             {error}
           </div>
         )}
@@ -90,13 +90,13 @@ export default function DepositFunds({ splitAddress, onSuccess }: DepositFundsPr
         <button
           onClick={handleDeposit}
           disabled={loading || !amount}
-          className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
+          className="w-full px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed text-sm font-medium"
         >
           {loading ? "Sending..." : "Send ETH"}
         </button>
 
-        <p className="text-xs text-gray-500">
-          Funds will automatically distribute to all recipients when received.
+        <p className="text-xs text-gray-400">
+          Funds auto-distribute to recipients
         </p>
       </div>
     </div>

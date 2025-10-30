@@ -101,66 +101,67 @@ export default function Dashboard() {
           </div>
         )}
 
-      {/* Splits Grid */}
-      {!loading && splits.length > 0 && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {splits.map((split) => (
-            <Link
-              key={split.id}
-              href={`/splits/${split.contract_address}`}
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="font-mono text-sm font-semibold mb-2">
-                    {truncateAddress(split.contract_address, 6)}
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    {formatDate(split.created_at)}
-                  </p>
+        {/* Splits Grid */}
+        {!loading && splits.length > 0 && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {splits.map((split) => (
+              <Link
+                key={split.id}
+                href={`/splits/${split.contract_address}`}
+                className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="font-mono text-sm font-medium text-gray-900 mb-1">
+                      {truncateAddress(split.contract_address, 6)}
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      {formatDate(split.created_at)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(getBaseScanUrl(split.contract_address, chainId), '_blank', 'noopener,noreferrer');
+                    }}
+                    className="text-gray-400 hover:text-emerald-500 text-sm transition-colors"
+                    aria-label="View on BaseScan"
+                  >
+                    ↗
+                  </button>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.open(getBaseScanUrl(split.contract_address, chainId), '_blank', 'noopener,noreferrer');
-                  }}
-                  className="text-blue-600 hover:text-blue-700 text-sm"
-                  aria-label="View on BaseScan"
-                >
-                  ↗
-                </button>
-              </div>
 
-              <div className="border-t border-gray-100 pt-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Recipients</span>
-                  <span className="font-semibold">{split.recipients.length}</span>
+                <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-500">Recipients</span>
+                  <span className="text-sm font-semibold text-gray-900">{split.recipients.length}</span>
                 </div>
-              </div>
 
-              <div className="mt-4">
-                <div className="text-xs text-gray-500 mb-2">Split:</div>
-                <div className="flex flex-wrap gap-2">
-                  {split.recipients.slice(0, 3).map((recipient, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs"
-                    >
-                      {recipient.percentage}%
-                    </span>
-                  ))}
-                  {split.recipients.length > 3 && (
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-xs">
-                      +{split.recipients.length - 3}
-                    </span>
-                  )}
+                <div className="mt-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    {split.recipients.slice(0, 3).map((recipient, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 text-xs font-medium"
+                      >
+                        {recipient.percentage}%
+                      </span>
+                    ))}
+                    {split.recipients.length > 3 && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-medium">
+                        +{split.recipients.length - 3}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
       {/* Create Modal */}
       {showCreateModal && (

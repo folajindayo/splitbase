@@ -122,10 +122,12 @@ export default function SplitDetailsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading split details...</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-emerald-500"></div>
+            <p className="mt-4 text-sm text-gray-500">Loading split details...</p>
+          </div>
         </div>
       </div>
     );
@@ -133,10 +135,12 @@ export default function SplitDetailsPage() {
 
   if (!splitData) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Split Not Found</h2>
-          <p className="text-gray-600">This split contract doesn&apos;t exist or hasn&apos;t been indexed yet.</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Split Not Found</h2>
+            <p className="text-sm text-gray-500">This contract doesn&apos;t exist or hasn&apos;t been indexed yet.</p>
+          </div>
         </div>
       </div>
     );
@@ -145,115 +149,101 @@ export default function SplitDetailsPage() {
   const recipients = splitData.recipients || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Split Details</h1>
-        
-        {/* Contract Address */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Contract Address</p>
-              <p className="font-mono text-lg font-semibold">{splitAddress}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleCopy}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                {copied ? "✓ Copied" : "Copy"}
-              </button>
-              <a
-                href={getBaseScanUrl(splitAddress, chainId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                View on BaseScan ↗
-              </a>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-6">Split Contract</h1>
+          
+          {/* Contract Address Card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Contract Address</p>
+                <p className="font-mono text-sm font-medium text-gray-900">{splitAddress}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopy}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium"
+                >
+                  {copied ? "✓ Copied" : "Copy"}
+                </button>
+                <a
+                  href={getBaseScanUrl(splitAddress, chainId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium"
+                >
+                  BaseScan ↗
+                </a>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Balance Card */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4">Contract Balance</h2>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold">{balance}</span>
-              <span className="text-2xl text-gray-600">ETH</span>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Balance Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h2 className="text-sm font-medium text-gray-500 mb-3">Balance</h2>
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-3xl font-semibold text-gray-900">{balance}</span>
+                <span className="text-lg text-gray-500">ETH</span>
+              </div>
+              {parseFloat(balance) > 0 && (
+                <button
+                  onClick={handleDistribute}
+                  disabled={distributing}
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  {distributing ? "Distributing..." : "Distribute Now"}
+                </button>
+              )}
             </div>
-            {parseFloat(balance) > 0 && (
-              <button
-                onClick={handleDistribute}
-                disabled={distributing}
-                className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {distributing ? "Distributing..." : "Distribute Now"}
-              </button>
-            )}
+
+            {/* Recipients Table */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h2 className="text-sm font-medium text-gray-500 mb-4">Recipients</h2>
+              <div className="space-y-3">
+                {recipients.map((recipient: { wallet_address: string; percentage: number }, index: number) => (
+                  <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                    <a
+                      href={getBaseScanUrl(recipient.wallet_address, chainId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-sm text-emerald-600 hover:text-emerald-700"
+                    >
+                      {truncateAddress(recipient.wallet_address, 6)}
+                    </a>
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 text-xs font-medium">
+                      {recipient.percentage}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Transaction History */}
+            <TransactionHistory splitAddress={splitAddress} />
           </div>
 
-          {/* Recipients Table */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4">Recipients</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-gray-200">
-                  <tr>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Address
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                      Percentage
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recipients.map((recipient: { wallet_address: string; percentage: number }, index: number) => (
-                    <tr key={index} className="border-b border-gray-100">
-                      <td className="py-3 px-4">
-                        <a
-                          href={getBaseScanUrl(recipient.wallet_address, chainId)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-blue-600 hover:text-blue-700"
-                        >
-                          {truncateAddress(recipient.wallet_address, 6)}
-                        </a>
-                      </td>
-                      <td className="py-3 px-4 text-right font-semibold">
-                        {recipient.percentage}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Deposit Card */}
+            {isConnected && <DepositFunds splitAddress={splitAddress} onSuccess={loadSplitData} />}
+
+            {/* Info Card */}
+            <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-5">
+              <h3 className="text-sm font-medium text-emerald-900 mb-3">How it works</h3>
+              <ul className="text-xs text-emerald-700 space-y-2">
+                <li>• Send ETH to contract address</li>
+                <li>• Auto-distribute to recipients</li>
+                <li>• Each gets their % share</li>
+                <li>• All transactions on-chain</li>
+              </ul>
             </div>
-          </div>
-
-          {/* Transaction History */}
-          <TransactionHistory splitAddress={splitAddress} />
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Deposit Card */}
-          {isConnected && <DepositFunds splitAddress={splitAddress} onSuccess={loadSplitData} />}
-
-          {/* Info Card */}
-          <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-            <h3 className="font-semibold mb-2">ℹ️ How it works</h3>
-            <ul className="text-sm text-gray-700 space-y-2">
-              <li>• Send ETH to the contract address</li>
-              <li>• Funds auto-distribute to recipients</li>
-              <li>• Each recipient gets their % share</li>
-              <li>• All transactions are on-chain</li>
-            </ul>
           </div>
         </div>
       </div>
