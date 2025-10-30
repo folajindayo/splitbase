@@ -41,8 +41,15 @@ export default function SplitDetailsPage() {
 
       // Load from blockchain
       if (walletProvider) {
+        // Prefer window.ethereum if available (direct connection)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const provider = new BrowserProvider(walletProvider as any);
+        let providerToUse: any = walletProvider;
+        if (typeof window !== 'undefined' && window.ethereum) {
+          providerToUse = window.ethereum;
+        }
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const provider = new BrowserProvider(providerToUse as any);
         const details = await getSplitDetails(provider, splitAddress);
         const currentBalance = await getSplitBalance(provider, splitAddress);
         
