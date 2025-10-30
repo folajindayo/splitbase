@@ -9,6 +9,9 @@ import { getSplitByAddress } from "@/lib/splits";
 import { truncateAddress, getBaseScanUrl, copyToClipboard } from "@/lib/utils";
 import DepositFunds from "@/components/DepositFunds";
 import TransactionHistory from "@/components/TransactionHistory";
+import SplitAnalytics from "@/components/SplitAnalytics";
+import QRCodeGenerator from "@/components/QRCodeGenerator";
+import ShareableSplit from "@/components/ShareableSplit";
 import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
 export default function SplitDetailsPage() {
@@ -205,35 +208,55 @@ export default function SplitDetailsPage() {
             </div>
 
             {/* Recipients Table */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-sm font-medium text-gray-500 mb-4">Recipients</h2>
-              <div className="space-y-3">
-                {recipients.map((recipient: { wallet_address: string; percentage: number }, index: number) => (
-                  <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                    <a
-                      href={getBaseScanUrl(recipient.wallet_address, chainId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-mono text-sm text-emerald-600 hover:text-emerald-700"
-                    >
-                      {truncateAddress(recipient.wallet_address, 6)}
-                    </a>
-                    <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 text-xs font-medium">
-                      {recipient.percentage}%
-                    </span>
-                  </div>
-                ))}
+            <>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 className="text-sm font-medium text-gray-500 mb-4">Recipients</h2>
+                <div className="space-y-3">
+                  {(recipients as Array<{ wallet_address: string; percentage: number }>).map((recipient, index) => (
+                    <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                      <a
+                        href={getBaseScanUrl(recipient.wallet_address, chainId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-emerald-600 hover:text-emerald-700"
+                      >
+                        {truncateAddress(recipient.wallet_address, 6)}
+                      </a>
+                      <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 text-xs font-medium">
+                        {recipient.percentage}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Transaction History */}
-            <TransactionHistory splitAddress={splitAddress} />
+              {/* Transaction History */}
+              <TransactionHistory splitAddress={splitAddress} />
+
+              {/* Analytics Dashboard */}
+              {walletProvider && (
+                <SplitAnalytics 
+                  splitAddress={splitAddress}
+                  walletProvider={walletProvider}
+                />
+              )}
+            </>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Deposit Card */}
             {isConnected && <DepositFunds splitAddress={splitAddress} onSuccess={loadSplitData} />}
+
+            {/* QR Code Generator */}
+            <QRCodeGenerator address={splitAddress} />
+
+            {/* Shareable Split */}
+            <ShareableSplit 
+              splitAddress={splitAddress}
+              recipients={recipients}
+              totalDistributed={splitData.totalDistributed}
+            />
 
             {/* Info Card */}
             <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-5">
