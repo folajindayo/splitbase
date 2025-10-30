@@ -7,6 +7,13 @@ import { createSplit, getFactoryAddress } from "@/lib/contracts";
 import { saveSplit } from "@/lib/splits";
 import { isValidAddress, validatePercentages, hasDuplicateAddresses } from "@/lib/utils";
 
+// Extend Window interface for ethereum provider
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 interface Recipient {
   address: string;
   percentage: string;
