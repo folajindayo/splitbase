@@ -9,13 +9,18 @@ export default function Navigation() {
   const { address, isConnected } = useAppKitAccount();
   const pathname = usePathname();
 
+  // Hide navigation on home page (landing page has its own)
+  if (pathname === '/') {
+    return null;
+  }
+
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">S</span>
             </div>
             <span className="text-xl font-semibold text-gray-900">SplitBase</span>

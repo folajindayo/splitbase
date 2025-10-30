@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFFFFF;
+  --background: #F9FAFB;
   --foreground: #111827;
   --primary: #10B981;
   --card-bg: #FFFFFF;
@@ -12,6 +12,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
+}
+
+* {
+  scroll-behavior: smooth;
 }
 
 body {
