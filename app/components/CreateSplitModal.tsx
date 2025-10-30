@@ -123,6 +123,26 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
       
       if (typeof window !== 'undefined' && window.ethereum && isUsingBrowserWallet) {
         console.log("Using window.ethereum directly");
+        
+        // Request accounts to ensure we have the current selected account
+        const ethereumProvider = window.ethereum as Record<string, unknown> & {
+          request: (args: { method: string }) => Promise<string[]>;
+        };
+        const accounts = await ethereumProvider.request({ 
+          method: 'eth_requestAccounts' 
+        });
+        
+        if (!accounts || accounts.length === 0) {
+          throw new Error("No accounts found. Please connect your wallet.");
+        }
+        
+        // Verify the first account matches our connected address
+        if (accounts[0].toLowerCase() !== address.toLowerCase()) {
+          throw new Error(
+            "Wallet address mismatch. Please ensure the same account is selected in both your wallet and this app."
+          );
+        }
+        
         providerToUse = window.ethereum;
       }
       
@@ -140,14 +160,16 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
       // Get signer
       const signer = await provider.getSigner();
 
-      // Get the actual signer address (this is the source of truth)
+      // Verify signer address matches connected wallet
       const signerAddress = await signer.getAddress();
       console.log("Signer address:", signerAddress);
-      console.log("AppKit address:", address);
+      console.log("Connected address:", address);
       
-      // Use signer address as source of truth
-      // (AppKit address might differ when using window.ethereum directly)
-      const ownerAddress = signerAddress;
+      if (signerAddress.toLowerCase() !== address.toLowerCase()) {
+        throw new Error(
+          "Wallet address mismatch. Please reconnect your wallet and ensure the same account is selected."
+        );
+      }
 
       const recipientAddresses = recipients.map((r) => r.address);
       const percentages = recipients.map((r) => parseInt(r.percentage));
@@ -169,7 +191,7 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
       const factoryAddress = getFactoryAddress(chainId);
       await saveSplit(
         splitAddress,
-        ownerAddress,
+        address,
         factoryAddress,
         recipients.map((r) => ({
           wallet_address: r.address,
