@@ -158,18 +158,15 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <CreateSplitModal
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={handleSplitCreated}
-        />
-      )}
+        {/* Create Modal */}
+        {showCreateModal && (
+          <CreateSplitModal
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={handleSplitCreated}
+          />
+        )}
+      </div>
     </div>
   );
 }

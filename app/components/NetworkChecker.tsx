@@ -26,11 +26,11 @@ export default function NetworkChecker() {
   };
 
   return (
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-      <div className="flex items-center">
+    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+      <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
           <svg
-            className="h-5 w-5 text-yellow-400"
+            className="h-5 w-5 text-yellow-600"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -41,19 +41,17 @@ export default function NetworkChecker() {
             />
           </svg>
         </div>
-        <div className="ml-3 flex-1">
-          <p className="text-sm text-yellow-700">
-            You're connected to an unsupported network. Please switch to Base Sepolia or Base Mainnet to continue.
+        <div className="flex-1">
+          <p className="text-sm text-yellow-800">
+            Unsupported network. Switch to Base Sepolia or Base Mainnet.
           </p>
         </div>
-        <div className="ml-4">
-          <button
-            onClick={handleSwitchNetwork}
-            className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Switch Network
-          </button>
-        </div>
+        <button
+          onClick={handleSwitchNetwork}
+          className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+        >
+          Switch Network
+        </button>
       </div>
     </div>
   );
