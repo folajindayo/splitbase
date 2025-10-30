@@ -55,53 +55,51 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Splits</h1>
-        <p className="text-gray-600">
-          Manage your split payment contracts on Base
-        </p>
-      </div>
-
-      {/* Network Warning */}
-      <NetworkChecker />
-
-      {/* Create Button */}
-      <div className="mb-6">
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors flex items-center space-x-2"
-        >
-          <span>+</span>
-          <span>Create New Split</span>
-        </button>
-      </div>
-
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading your splits...</p>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && splits.length === 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div className="text-6xl mb-4">💸</div>
-          <h3 className="text-xl font-semibold mb-2">No splits yet</h3>
-          <p className="text-gray-600 mb-6">
-            Create your first split contract to get started
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">My Splits</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Manage your payment distribution contracts
+            </p>
+          </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
           >
-            Create Split
+            + Create Split
           </button>
         </div>
-      )}
+
+        {/* Network Warning */}
+        <NetworkChecker />
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-emerald-500"></div>
+            <p className="mt-4 text-sm text-gray-500">Loading splits...</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && splits.length === 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <div className="text-5xl mb-4">💸</div>
+            <h3 className="text-lg font-semibold mb-2">No splits yet</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Create your first split contract to get started
+            </p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded-lg transition-colors text-sm font-medium"
+            >
+              Create Split
+            </button>
+          </div>
+        )}
 
       {/* Splits Grid */}
       {!loading && splits.length > 0 && (
