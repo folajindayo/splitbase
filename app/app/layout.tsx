@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
-import "@/lib/reown";
+import AppKitProvider from "@/components/AppKitProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,8 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased bg-gray-50`}>
-        <Navigation />
-        <main className="min-h-screen">{children}</main>
+        <AppKitProvider>
+          <Navigation />
+          <main className="min-h-screen">{children}</main>
+        </AppKitProvider>
       </body>
     </html>
   );
