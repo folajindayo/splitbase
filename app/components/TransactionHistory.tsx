@@ -4,12 +4,18 @@ import { useEffect, useState } from "react";
 import { useAppKitProvider, useAppKitNetwork } from "@reown/appkit/react";
 import { BrowserProvider, Contract, formatEther } from "ethers";
 import { SPLIT_BASE_ABI } from "@/lib/contracts";
-import { formatDate, getBaseScanUrl } from "@/lib/utils";
+import { formatDate, getBaseScanUrl, truncateAddress } from "@/lib/utils";
+
+interface RecipientPayment {
+  recipient: string;
+  amount: string;
+}
 
 interface Transaction {
   hash: string;
   amount: string;
   timestamp: number;
+  payments: RecipientPayment[];
 }
 
 interface TransactionHistoryProps {
@@ -37,21 +43,52 @@ export default function TransactionHistory({ splitAddress }: TransactionHistoryP
 
     try {
       setLoading(true);
+      
+      // Prefer window.ethereum if available
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const provider = new BrowserProvider(walletProvider as any);
+      let providerToUse: any = walletProvider;
+      if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).ethereum) {
+        providerToUse = (window as unknown as Record<string, unknown>).ethereum;
+      }
+      
+      const provider = new BrowserProvider(providerToUse);
       const contract = new Contract(splitAddress, SPLIT_BASE_ABI, provider);
 
       // Query FundsDistributed events
-      const filter = contract.filters.FundsDistributed();
-      const events = await contract.queryFilter(filter, -10000); // Last ~10k blocks
+      const distributedFilter = contract.filters.FundsDistributed();
+      const distributedEvents = await contract.queryFilter(distributedFilter, -10000);
 
+      // Query RecipientPaid events
+      const paidFilter = contract.filters.RecipientPaid();
+      const paidEvents = await contract.queryFilter(paidFilter, -10000);
+
+      // Group RecipientPaid events by transaction hash
+      const paymentsByTx = new Map<string, RecipientPayment[]>();
+      
+      for (const event of paidEvents) {
+        const txHash = event.transactionHash;
+        if (!paymentsByTx.has(txHash)) {
+          paymentsByTx.set(txHash, []);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const eventArgs = (event as any).args;
+        paymentsByTx.get(txHash)!.push({
+          recipient: eventArgs[0],
+          amount: formatEther(eventArgs[1]),
+        });
+      }
+
+      // Build transactions with payment details
       const txs: Transaction[] = await Promise.all(
-        events.map(async (event) => {
+        distributedEvents.map(async (event) => {
           const block = await event.getBlock();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const eventArgs = (event as any).args;
           return {
             hash: event.transactionHash,
-            amount: formatEther(event.args[0]),
+            amount: formatEther(eventArgs[0]),
             timestamp: block.timestamp,
+            payments: paymentsByTx.get(event.transactionHash) || [],
           };
         })
       );
@@ -65,41 +102,68 @@ export default function TransactionHistory({ splitAddress }: TransactionHistoryP
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold mb-4">Transaction History</h2>
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <h2 className="text-sm font-medium text-gray-500 mb-4">Transaction History</h2>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-blue-600"></div>
-          <p className="mt-2 text-sm">Loading transactions...</p>
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-emerald-500"></div>
+          <p className="mt-2 text-xs text-gray-400">Loading transactions...</p>
         </div>
       ) : transactions.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>No distributions yet</p>
+        <div className="text-center py-8">
+          <p className="text-sm text-gray-400">No distributions yet</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {transactions.map((tx) => (
             <div
               key={tx.hash}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors"
             >
-              <div>
-                <p className="font-semibold text-gray-900">
-                  {tx.amount} ETH
-                </p>
-                <p className="text-sm text-gray-500">
-                  {formatDate(new Date(tx.timestamp * 1000).toISOString())}
-                </p>
+              {/* Transaction Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {tx.amount} ETH
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {formatDate(new Date(tx.timestamp * 1000).toISOString())}
+                  </p>
+                </div>
+                <a
+                  href={getBaseScanUrl(tx.hash, chainId, "tx")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-600 hover:text-emerald-700 text-xs font-medium"
+                >
+                  View Tx ↗
+                </a>
               </div>
-              <a
-                href={getBaseScanUrl(tx.hash, chainId, "tx")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-              >
-                View Tx ↗
-              </a>
+
+              {/* Recipient Payments */}
+              {tx.payments.length > 0 && (
+                <div className="border-t border-gray-100 pt-3 space-y-2">
+                  {tx.payments.map((payment, idx) => (
+                    <div 
+                      key={idx} 
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <a
+                        href={getBaseScanUrl(payment.recipient, chainId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-gray-600 hover:text-emerald-600 transition-colors"
+                      >
+                        {truncateAddress(payment.recipient, 4)}
+                      </a>
+                      <span className="text-gray-900 font-medium">
+                        {payment.amount} ETH
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

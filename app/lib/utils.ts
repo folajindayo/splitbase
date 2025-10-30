@@ -1,4 +1,5 @@
 import { isAddress } from "ethers";
+import { BLOCK_EXPLORERS, CHAIN_IDS } from "./constants";
 
 // Truncate ethereum address for display
 export function truncateAddress(address: string | undefined | null, chars = 4): string {
@@ -30,11 +31,7 @@ export function getBaseScanUrl(
   chainId: number,
   type: "address" | "tx" = "address"
 ): string {
-  const baseUrl =
-    chainId === 84532
-      ? "https://sepolia.basescan.org"
-      : "https://basescan.org";
-  
+  const baseUrl = BLOCK_EXPLORERS[chainId] || BLOCK_EXPLORERS[CHAIN_IDS.BASE_SEPOLIA];
   return `${baseUrl}/${type}/${address}`;
 }
 

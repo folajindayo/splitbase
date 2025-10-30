@@ -1,4 +1,5 @@
 import { BrowserProvider, Contract, JsonRpcSigner, formatEther } from "ethers";
+import { CHAIN_IDS } from "./constants";
 
 // Contract ABIs
 export const SPLIT_FACTORY_ABI = [
@@ -26,11 +27,9 @@ export const SPLIT_BASE_ABI = [
 
 // Get factory contract address based on chain
 export function getFactoryAddress(chainId: number): string {
-  if (chainId === 84532) {
-    // Base Sepolia
+  if (chainId === CHAIN_IDS.BASE_SEPOLIA) {
     return process.env.NEXT_PUBLIC_SPLIT_FACTORY_ADDRESS_SEPOLIA || "";
-  } else if (chainId === 8453) {
-    // Base Mainnet
+  } else if (chainId === CHAIN_IDS.BASE_MAINNET) {
     return process.env.NEXT_PUBLIC_SPLIT_FACTORY_ADDRESS_BASE || "";
   }
   throw new Error(`Unsupported chain ID: ${chainId}`);
