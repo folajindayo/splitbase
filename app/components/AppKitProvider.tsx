@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { createAppKit } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
-import { base, baseSepolia } from "@reown/appkit/networks";
+import { baseSepolia, base } from "@reown/appkit/networks";
 
 // Get projectId from environment
 const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID;
@@ -16,7 +16,7 @@ if (!projectId) {
 const metadata = {
   name: "SplitBase",
   description: "Onchain split payment dashboard powered by Base",
-  url: "http://localhost:3000",
+  url: typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
   icons: ["https://avatars.githubusercontent.com/u/37784886"],
 };
 
@@ -29,17 +29,21 @@ createAppKit({
   metadata,
   features: {
     analytics: false,
-    email: false,
     socials: [],
+    email: false,
   },
   themeMode: "light",
   themeVariables: {
     "--w3m-accent": "#0052FF", // Base blue
   },
-  allowUnsupportedChain: false,
-  enableWalletConnect: true,
-  enableInjected: true,
-  enableCoinbase: true,
+  featuredWalletIds: [
+    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase
+  ],
+  includeWalletIds: [
+    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase
+  ],
 });
 
 export default function AppKitProvider({ children }: { children: ReactNode }) {

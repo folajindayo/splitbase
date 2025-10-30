@@ -18,7 +18,7 @@ interface CreateSplitModalProps {
 }
 
 export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModalProps) {
-  const { address } = useAppKitAccount();
+  const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
   const { caipNetwork } = useAppKitNetwork();
   
@@ -30,6 +30,10 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
   const [error, setError] = useState("");
 
   const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : 84532;
+  
+  // Check if using browser extension (preferred) vs WalletConnect
+  const isUsingBrowserWallet = typeof window !== 'undefined' && 
+    (window.ethereum || (walletProvider as any)?.isMetaMask);
 
   const addRecipient = () => {
     if (recipients.length < 10) {
@@ -81,7 +85,15 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
   };
 
   const handleCreate = async () => {
-    if (!address || !walletProvider) return;
+    if (!address) {
+      setError("Please connect your wallet first");
+      return;
+    }
+
+    if (!walletProvider) {
+      setError("Wallet provider not available. Please reconnect your wallet.");
+      return;
+    }
 
     const validationError = validateInputs();
     if (validationError) {
@@ -93,12 +105,38 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
     setError("");
 
     try {
+      console.log("Creating split with chainId:", chainId);
+      console.log("Wallet provider type:", walletProvider?.constructor?.name);
+      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const provider = new BrowserProvider(walletProvider as any);
-      const signer = await provider.getSigner();
+      
+      // Get network to verify we're on the right chain
+      const network = await provider.getNetwork();
+      console.log("Provider network:", network.chainId.toString());
+      
+      // For AppKit/WalletConnect, we need to get signer differently
+      let signer;
+      try {
+        signer = await provider.getSigner(address);
+      } catch (e) {
+        console.log("Failed to get signer with address, trying without:", e);
+        signer = await provider.getSigner();
+      }
+
+      // Verify signer address matches connected wallet
+      const signerAddress = await signer.getAddress();
+      console.log("Signer address:", signerAddress);
+      
+      if (signerAddress.toLowerCase() !== address.toLowerCase()) {
+        throw new Error("Wallet address mismatch. Please reconnect your wallet.");
+      }
 
       const recipientAddresses = recipients.map((r) => r.address);
       const percentages = recipients.map((r) => parseInt(r.percentage));
+
+      console.log("Recipients:", recipientAddresses);
+      console.log("Percentages:", percentages);
 
       // Create split contract
       const { splitAddress } = await createSplit(
@@ -107,6 +145,8 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
         recipientAddresses,
         percentages
       );
+
+      console.log("Split created at:", splitAddress);
 
       // Save to database
       const factoryAddress = getFactoryAddress(chainId);
@@ -124,7 +164,21 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
     } catch (err) {
       console.error("Failed to create split:", err);
       const error = err as Error;
-      setError(error.message || "Failed to create split. Please try again.");
+      
+      // Handle specific error types
+      let errorMessage = "Failed to create split. Please try again.";
+      
+      if (error.message.includes("user rejected") || error.message.includes("denied")) {
+        errorMessage = "Transaction was rejected. Please approve the transaction in your wallet.";
+      } else if (error.message.includes("insufficient funds")) {
+        errorMessage = "Insufficient funds to create split. You need ETH to pay for gas fees.";
+      } else if (error.message.includes("network") || error.message.includes("chain")) {
+        errorMessage = `Please switch to Base Sepolia network in your wallet.`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

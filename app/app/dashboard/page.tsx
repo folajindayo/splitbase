@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getUserSplits, SplitWithRecipients } from "@/lib/splits";
 import { truncateAddress, formatDate, getBaseScanUrl } from "@/lib/utils";
 import CreateSplitModal from "@/components/CreateSplitModal";
+import NetworkChecker from "@/components/NetworkChecker";
 import { useAppKitNetwork } from "@reown/appkit/react";
 
 export default function Dashboard() {
@@ -62,6 +63,9 @@ export default function Dashboard() {
           Manage your split payment contracts on Base
         </p>
       </div>
+
+      {/* Network Warning */}
+      <NetworkChecker />
 
       {/* Create Button */}
       <div className="mb-6">
