@@ -37,7 +37,7 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : 84532;
+  const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
   
   // Check if using browser extension (preferred) vs WalletConnect
   const isUsingBrowserWallet = typeof window !== 'undefined' && 
