@@ -121,15 +121,17 @@ export default function Dashboard() {
                     {formatDate(split.created_at)}
                   </p>
                 </div>
-                <a
-                  href={getBaseScanUrl(split.contract_address, chainId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(getBaseScanUrl(split.contract_address, chainId), '_blank', 'noopener,noreferrer');
+                  }}
                   className="text-blue-600 hover:text-blue-700 text-sm"
+                  aria-label="View on BaseScan"
                 >
                   ↗
-                </a>
+                </button>
               </div>
 
               <div className="border-t border-gray-100 pt-4">

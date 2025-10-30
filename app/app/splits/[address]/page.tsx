@@ -46,9 +46,22 @@ export default function SplitDetailsPage() {
         const details = await getSplitDetails(provider, splitAddress);
         const currentBalance = await getSplitBalance(provider, splitAddress);
         
+        // Normalize recipients data structure
+        // Database has: { wallet_address, percentage }
+        // Blockchain has: { recipients: string[], percentages: bigint[] }
+        let normalizedRecipients = dbSplit?.recipients || [];
+        
+        if (details.recipients && details.percentages) {
+          normalizedRecipients = details.recipients.map((addr: string, idx: number) => ({
+            wallet_address: addr,
+            percentage: Number(details.percentages[idx])
+          }));
+        }
+        
         setSplitData({
           ...dbSplit,
           ...details,
+          recipients: normalizedRecipients,
         });
         setBalance(currentBalance);
       } else if (dbSplit) {

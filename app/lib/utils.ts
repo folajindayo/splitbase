@@ -1,7 +1,8 @@
 import { isAddress } from "ethers";
 
 // Truncate ethereum address for display
-export function truncateAddress(address: string, chars = 4): string {
+export function truncateAddress(address: string | undefined | null, chars = 4): string {
+  if (!address) return "Invalid Address";
   return `${address.substring(0, chars + 2)}...${address.substring(
     address.length - chars
   )}`;
