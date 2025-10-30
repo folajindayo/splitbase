@@ -10,7 +10,7 @@ import { isValidAddress, validatePercentages, hasDuplicateAddresses } from "@/li
 // Extend Window interface for ethereum provider
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: Record<string, unknown>;
   }
 }
 
@@ -25,7 +25,7 @@ interface CreateSplitModalProps {
 }
 
 export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModalProps) {
-  const { address, isConnected } = useAppKitAccount();
+  const { address } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
   const { caipNetwork } = useAppKitNetwork();
   
@@ -40,7 +40,7 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
   
   // Check if using browser extension (preferred) vs WalletConnect
   const isUsingBrowserWallet = typeof window !== 'undefined' && 
-    (window.ethereum || (walletProvider as any)?.isMetaMask);
+    (window.ethereum || (walletProvider as Record<string, unknown>)?.isMetaMask);
 
   const addRecipient = () => {
     if (recipients.length < 10) {
@@ -118,15 +118,19 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
       
       // Prefer window.ethereum if available (direct MetaMask connection)
       // This avoids W3mFrameProvider restrictions
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let providerToUse: any = walletProvider;
+      let providerToUse: Record<string, unknown> | undefined = walletProvider as Record<string, unknown> | undefined;
       
       if (typeof window !== 'undefined' && window.ethereum && isUsingBrowserWallet) {
         console.log("Using window.ethereum directly");
         providerToUse = window.ethereum;
       }
       
-      const provider = new BrowserProvider(providerToUse);
+      if (!providerToUse) {
+        throw new Error("No wallet provider available");
+      }
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const provider = new BrowserProvider(providerToUse as any);
       
       // Get network to verify we're on the right chain
       const network = await provider.getNetwork();
