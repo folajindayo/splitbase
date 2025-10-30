@@ -140,13 +140,14 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
       // Get signer
       const signer = await provider.getSigner();
 
-      // Verify signer address matches connected wallet
+      // Get the actual signer address (this is the source of truth)
       const signerAddress = await signer.getAddress();
       console.log("Signer address:", signerAddress);
+      console.log("AppKit address:", address);
       
-      if (signerAddress.toLowerCase() !== address.toLowerCase()) {
-        throw new Error("Wallet address mismatch. Please reconnect your wallet.");
-      }
+      // Use signer address as source of truth
+      // (AppKit address might differ when using window.ethereum directly)
+      const ownerAddress = signerAddress;
 
       const recipientAddresses = recipients.map((r) => r.address);
       const percentages = recipients.map((r) => parseInt(r.percentage));
