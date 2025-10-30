@@ -107,22 +107,26 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
     try {
       console.log("Creating split with chainId:", chainId);
       console.log("Wallet provider type:", walletProvider?.constructor?.name);
+      console.log("Is using browser wallet:", isUsingBrowserWallet);
       
+      // Prefer window.ethereum if available (direct MetaMask connection)
+      // This avoids W3mFrameProvider restrictions
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const provider = new BrowserProvider(walletProvider as any);
+      let providerToUse: any = walletProvider;
+      
+      if (typeof window !== 'undefined' && window.ethereum && isUsingBrowserWallet) {
+        console.log("Using window.ethereum directly");
+        providerToUse = window.ethereum;
+      }
+      
+      const provider = new BrowserProvider(providerToUse);
       
       // Get network to verify we're on the right chain
       const network = await provider.getNetwork();
       console.log("Provider network:", network.chainId.toString());
       
-      // For AppKit/WalletConnect, we need to get signer differently
-      let signer;
-      try {
-        signer = await provider.getSigner(address);
-      } catch (e) {
-        console.log("Failed to get signer with address, trying without:", e);
-        signer = await provider.getSigner();
-      }
+      // Get signer
+      const signer = await provider.getSigner();
 
       // Verify signer address matches connected wallet
       const signerAddress = await signer.getAddress();
