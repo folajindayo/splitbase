@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getUserSplits, SplitWithRecipients } from "@/lib/splits";
 import { truncateAddress, formatDate, getBaseScanUrl } from "@/lib/utils";
 import CreateSplitModal from "@/components/CreateSplitModal";
+import DashboardStats from "@/components/DashboardStats";
 import NetworkChecker from "@/components/NetworkChecker";
 import { useAppKitNetwork } from "@reown/appkit/react";
 import { DEFAULT_CHAIN_ID } from "@/lib/constants";
@@ -76,6 +77,11 @@ export default function Dashboard() {
 
         {/* Network Warning */}
         <NetworkChecker />
+
+        {/* Dashboard Stats */}
+        {!loading && splits.length > 0 && (
+          <DashboardStats splits={splits} />
+        )}
 
         {/* Loading State */}
         {loading && (

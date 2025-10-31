@@ -153,12 +153,32 @@ export default function SplitDetailsPage() {
 
   const recipients = splitData.recipients || [];
 
+  const isOwner = userAddress && splitData?.owner_address && 
+    userAddress.toLowerCase() === splitData.owner_address.toLowerCase();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-6">Split Contract</h1>
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {splitData?.name || 'Split Contract'}
+              </h1>
+              {splitData?.description && (
+                <p className="text-gray-600 mt-2">{splitData.description}</p>
+              )}
+            </div>
+            {isOwner && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                ✏️ Edit
+              </button>
+            )}
+          </div>
           
           {/* Contract Address Card */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -268,6 +288,20 @@ export default function SplitDetailsPage() {
             </div>
           </div>
         </div>
+
+        {/* Edit Modal */}
+        {showEditModal && splitData && (
+          <EditSplitModal
+            contractAddress={splitAddress}
+            currentName={splitData.name || 'Untitled Split'}
+            currentDescription={splitData.description}
+            onClose={() => setShowEditModal(false)}
+            onSuccess={() => {
+              setShowEditModal(false);
+              loadSplitData();
+            }}
+          />
+        )}
       </div>
     </div>
   );
