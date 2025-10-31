@@ -7,11 +7,13 @@ import { BrowserProvider } from "ethers";
 import { getSplitDetails, getSplitBalance } from "@/lib/contracts";
 import { getSplitByAddress } from "@/lib/splits";
 import { truncateAddress, getBaseScanUrl, copyToClipboard } from "@/lib/utils";
+import { exportSplitToCSV } from "@/lib/export";
 import DepositFunds from "@/components/DepositFunds";
 import TransactionHistory from "@/components/TransactionHistory";
 import SplitAnalytics from "@/components/SplitAnalytics";
 import ShareableSplit from "@/components/ShareableSplit";
 import EditSplitModal from "@/components/EditSplitModal";
+import Toast from "@/components/Toast";
 import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
 export default function SplitDetailsPage() {
@@ -26,9 +28,9 @@ export default function SplitDetailsPage() {
   const [splitData, setSplitData] = useState<any>(null);
   const [balance, setBalance] = useState("0");
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
   const [distributing, setDistributing] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
 
@@ -89,8 +91,9 @@ export default function SplitDetailsPage() {
   const handleCopy = async () => {
     const success = await copyToClipboard(splitAddress);
     if (success) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setToastMessage("Contract address copied to clipboard!");
+    } else {
+      setToastMessage("Failed to copy address");
     }
   };
 
@@ -170,14 +173,22 @@ export default function SplitDetailsPage() {
                 <p className="text-gray-600 mt-2">{splitData.description}</p>
               )}
             </div>
-            {isOwner && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowEditModal(true)}
+                onClick={() => exportSplitToCSV(splitData)}
                 className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               >
-                ✏️ Edit
+                📥 Export
               </button>
-            )}
+              {isOwner && (
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  ✏️ Edit
+                </button>
+              )}
+            </div>
           </div>
           
           {/* Contract Address Card */}

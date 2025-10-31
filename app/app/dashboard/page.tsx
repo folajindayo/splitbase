@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getUserSplits, SplitWithRecipients, toggleFavorite } from "@/lib/splits";
 import { truncateAddress, formatDate, getBaseScanUrl } from "@/lib/utils";
+import { exportAllSplitsToCSV } from "@/lib/export";
 import CreateSplitModal from "@/components/CreateSplitModal";
 import DashboardStats from "@/components/DashboardStats";
 import NetworkChecker from "@/components/NetworkChecker";
@@ -98,12 +99,22 @@ export default function Dashboard() {
               Manage your payment distribution contracts
             </p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-          >
-            + Create Split
-          </button>
+          <div className="flex items-center gap-3">
+            {splits.length > 0 && (
+              <button
+                onClick={() => exportAllSplitsToCSV(splits)}
+                className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium border border-gray-200"
+              >
+                📥 Export CSV
+              </button>
+            )}
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+            >
+              + Create Split
+            </button>
+          </div>
         </div>
 
         {/* Network Warning */}
@@ -202,17 +213,34 @@ export default function Dashboard() {
                       Created {formatDate(split.created_at)}
                     </p>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.open(getBaseScanUrl(split.contract_address, chainId), '_blank', 'noopener,noreferrer');
-                    }}
-                    className="text-gray-400 hover:text-emerald-500 text-sm transition-colors"
-                    aria-label="View on BaseScan"
-                  >
-                    ↗
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleToggleFavorite(split.contract_address, split.is_favorite);
+                      }}
+                      className={`text-xl transition-colors ${
+                        split.is_favorite 
+                          ? "text-yellow-500 hover:text-yellow-600" 
+                          : "text-gray-300 hover:text-yellow-500"
+                      }`}
+                      aria-label={split.is_favorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                      {split.is_favorite ? "⭐" : "☆"}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(getBaseScanUrl(split.contract_address, chainId), '_blank', 'noopener,noreferrer');
+                      }}
+                      className="text-gray-400 hover:text-emerald-500 text-sm transition-colors"
+                      aria-label="View on BaseScan"
+                    >
+                      ↗
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between py-3 border-t border-gray-100">
