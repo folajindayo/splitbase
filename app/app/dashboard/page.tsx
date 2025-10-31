@@ -53,6 +53,36 @@ export default function Dashboard() {
     loadSplits();
   };
 
+  const handleToggleFavorite = async (contractAddress: string, currentIsFavorite: boolean) => {
+    try {
+      // Optimistic update
+      setSplits(prevSplits =>
+        prevSplits.map(split =>
+          split.contract_address === contractAddress
+            ? { ...split, is_favorite: !currentIsFavorite }
+            : split
+        )
+      );
+
+      // Update in database
+      await toggleFavorite(contractAddress, !currentIsFavorite);
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      // Revert on error
+      setSplits(prevSplits =>
+        prevSplits.map(split =>
+          split.contract_address === contractAddress
+            ? { ...split, is_favorite: currentIsFavorite }
+            : split
+        )
+      );
+    }
+  };
+
+  const filteredSplits = filterTab === "favorites" 
+    ? splits.filter(split => split.is_favorite) 
+    : splits;
+
   if (!isConnected) {
     return null;
   }
@@ -78,6 +108,32 @@ export default function Dashboard() {
 
         {/* Network Warning */}
         <NetworkChecker />
+
+        {/* Filter Tabs */}
+        {!loading && splits.length > 0 && (
+          <div className="flex items-center gap-2 mb-6">
+            <button
+              onClick={() => setFilterTab("all")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filterTab === "all"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              All Splits ({splits.length})
+            </button>
+            <button
+              onClick={() => setFilterTab("favorites")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filterTab === "favorites"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              ⭐ Favorites ({splits.filter(s => s.is_favorite).length})
+            </button>
+          </div>
+        )}
 
         {/* Dashboard Stats */}
         {!loading && splits.length > 0 && (
@@ -109,10 +165,21 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Empty Favorites State */}
+        {!loading && filterTab === "favorites" && filteredSplits.length === 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <div className="text-5xl mb-4">⭐</div>
+            <h3 className="text-lg font-semibold mb-2">No favorite splits yet</h3>
+            <p className="text-sm text-gray-500">
+              Click the star icon on any split to add it to your favorites
+            </p>
+          </div>
+        )}
+
         {/* Splits Grid */}
-        {!loading && splits.length > 0 && (
+        {!loading && filteredSplits.length > 0 && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {splits.map((split) => (
+            {filteredSplits.map((split) => (
               <Link
                 key={split.id}
                 href={`/splits/${split.contract_address}`}
