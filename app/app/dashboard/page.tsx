@@ -113,11 +113,19 @@ export default function Dashboard() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="font-mono text-sm font-medium text-gray-900 mb-1">
-                      {truncateAddress(split.contract_address, 6)}
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">
+                      {split.name || 'Untitled Split'}
                     </h3>
-                    <p className="text-xs text-gray-400">
-                      {formatDate(split.created_at)}
+                    <p className="font-mono text-xs text-gray-500 mb-1">
+                      {truncateAddress(split.contract_address, 6)}
+                    </p>
+                    {split.description && (
+                      <p className="text-xs text-gray-400 mt-2 line-clamp-2">
+                        {split.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-2">
+                      Created {formatDate(split.created_at)}
                     </p>
                   </div>
                   <button

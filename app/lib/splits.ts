@@ -9,7 +9,9 @@ export async function saveSplit(
   contractAddress: string,
   ownerAddress: string,
   factoryAddress: string,
-  recipients: { wallet_address: string; percentage: number }[]
+  recipients: { wallet_address: string; percentage: number }[],
+  name?: string,
+  description?: string
 ): Promise<void> {
   // Insert split
   const { data: splitData, error: splitError } = await supabase
@@ -18,6 +20,9 @@ export async function saveSplit(
       contract_address: contractAddress.toLowerCase(),
       owner_address: ownerAddress.toLowerCase(),
       factory_address: factoryAddress.toLowerCase(),
+      name: name || 'Untitled Split',
+      description: description || null,
+      is_favorite: false,
     })
     .select()
     .single();
@@ -39,6 +44,36 @@ export async function saveSplit(
 
   if (recipientsError) {
     throw new Error(`Failed to save recipients: ${recipientsError.message}`);
+  }
+}
+
+// Update split metadata
+export async function updateSplit(
+  contractAddress: string,
+  updates: { name?: string; description?: string; tags?: string[] }
+): Promise<void> {
+  const { error } = await supabase
+    .from("splits")
+    .update(updates)
+    .eq("contract_address", contractAddress.toLowerCase());
+
+  if (error) {
+    throw new Error(`Failed to update split: ${error.message}`);
+  }
+}
+
+// Toggle favorite status
+export async function toggleFavorite(
+  contractAddress: string,
+  isFavorite: boolean
+): Promise<void> {
+  const { error } = await supabase
+    .from("splits")
+    .update({ is_favorite: isFavorite })
+    .eq("contract_address", contractAddress.toLowerCase());
+
+  if (error) {
+    throw new Error(`Failed to toggle favorite: ${error.message}`);
   }
 }
 

@@ -30,6 +30,8 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
   const { walletProvider } = useAppKitProvider("eip155");
   const { caipNetwork } = useAppKitNetwork();
   
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [recipients, setRecipients] = useState<Recipient[]>([
     { address: "", percentage: "" },
     { address: "", percentage: "" },
@@ -63,6 +65,11 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
   };
 
   const validateInputs = (): string | null => {
+    // Check name is provided
+    if (!name.trim()) {
+      return "Please provide a name for your split";
+    }
+
     // Check all fields are filled
     if (recipients.some((r) => !r.address || !r.percentage)) {
       return "Please fill all recipient fields";
@@ -196,7 +203,9 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
         recipients.map((r) => ({
           wallet_address: r.address,
           percentage: parseInt(r.percentage),
-        }))
+        })),
+        name.trim(),
+        description.trim() || undefined
       );
 
       onSuccess();
@@ -245,9 +254,46 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
         </div>
 
         <div className="p-6">
-          <p className="text-gray-600 mb-6">
-            Add recipients and their split percentages. The total must equal 100%.
-          </p>
+          {/* Split Name */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Split Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., Team Revenue Split, Project Funding"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError("");
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              disabled={loading}
+              maxLength={100}
+            />
+          </div>
+
+          {/* Description (Optional) */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description <span className="text-gray-400">(optional)</span>
+            </label>
+            <textarea
+              placeholder="Add notes about this split contract..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+              disabled={loading}
+              rows={3}
+              maxLength={500}
+            />
+          </div>
+
+          <div className="border-t border-gray-200 pt-6 mb-4">
+            <p className="text-gray-600 mb-4">
+              Add recipients and their split percentages. The total must equal 100%.
+            </p>
+          </div>
 
           {/* Recipients List */}
           <div className="space-y-4 mb-6">

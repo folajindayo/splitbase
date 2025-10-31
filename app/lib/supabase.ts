@@ -15,6 +15,10 @@ export interface Split {
   contract_address: string;
   owner_address: string;
   factory_address: string;
+  name: string;
+  description?: string;
+  is_favorite: boolean;
+  tags?: string[];
   created_at: string;
 }
 

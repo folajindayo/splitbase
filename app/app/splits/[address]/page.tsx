@@ -11,13 +11,14 @@ import DepositFunds from "@/components/DepositFunds";
 import TransactionHistory from "@/components/TransactionHistory";
 import SplitAnalytics from "@/components/SplitAnalytics";
 import ShareableSplit from "@/components/ShareableSplit";
+import EditSplitModal from "@/components/EditSplitModal";
 import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
 export default function SplitDetailsPage() {
   const params = useParams();
   const splitAddress = params.address as string;
   
-  const { isConnected } = useAppKitAccount();
+  const { isConnected, address: userAddress } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
   const { caipNetwork } = useAppKitNetwork();
   
@@ -27,6 +28,7 @@ export default function SplitDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [distributing, setDistributing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
 

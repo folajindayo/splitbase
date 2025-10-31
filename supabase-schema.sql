@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS splits (
   contract_address TEXT NOT NULL UNIQUE,
   owner_address TEXT NOT NULL,
   factory_address TEXT NOT NULL,
+  name TEXT NOT NULL DEFAULT 'Untitled Split',
+  description TEXT,
+  is_favorite BOOLEAN DEFAULT false,
+  tags TEXT[],
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
