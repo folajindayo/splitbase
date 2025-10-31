@@ -203,7 +203,7 @@ export default function SplitDetailsPage() {
                   onClick={handleCopy}
                   className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium"
                 >
-                  {copied ? "✓ Copied" : "Copy"}
+                  Copy
                 </button>
                 <a
                   href={getBaseScanUrl(splitAddress, chainId)}
@@ -311,6 +311,15 @@ export default function SplitDetailsPage() {
               setShowEditModal(false);
               loadSplitData();
             }}
+          />
+        )}
+
+        {/* Toast Notification */}
+        {toastMessage && (
+          <Toast
+            message={toastMessage}
+            type="success"
+            onClose={() => setToastMessage(null)}
           />
         )}
       </div>
