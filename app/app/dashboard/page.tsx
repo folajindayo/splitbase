@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getUserSplits, SplitWithRecipients } from "@/lib/splits";
+import { getUserSplits, SplitWithRecipients, toggleFavorite } from "@/lib/splits";
 import { truncateAddress, formatDate, getBaseScanUrl } from "@/lib/utils";
 import CreateSplitModal from "@/components/CreateSplitModal";
 import DashboardStats from "@/components/DashboardStats";
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [splits, setSplits] = useState<SplitWithRecipients[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [filterTab, setFilterTab] = useState<"all" | "favorites">("all");
 
   const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
 
