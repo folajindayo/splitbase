@@ -9,9 +9,11 @@ export async function saveSplit(
   contractAddress: string,
   ownerAddress: string,
   factoryAddress: string,
-  recipients: { wallet_address: string; percentage: number }[],
+  recipients: { wallet_address: string; percentage: number; email?: string; email_notifications?: boolean }[],
   name?: string,
-  description?: string
+  description?: string,
+  ownerEmail?: string,
+  ownerEmailNotifications?: boolean
 ): Promise<void> {
   // Insert split
   const { data: splitData, error: splitError } = await supabase
@@ -23,6 +25,8 @@ export async function saveSplit(
       name: name || 'Untitled Split',
       description: description || null,
       is_favorite: false,
+      owner_email: ownerEmail || null,
+      owner_email_notifications: ownerEmailNotifications || false,
     })
     .select()
     .single();
@@ -36,6 +40,8 @@ export async function saveSplit(
     split_id: splitData.id,
     wallet_address: r.wallet_address.toLowerCase(),
     percentage: r.percentage,
+    email: r.email || null,
+    email_notifications: r.email_notifications || false,
   }));
 
   const { error: recipientsError } = await supabase

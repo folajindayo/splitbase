@@ -6,12 +6,20 @@ SplitBase allows creators, teams, and DAOs to receive payments into a single wal
 
 ## 🚀 Features
 
+### Core Features
 - **Wallet Authentication**: Connect via Reown (WalletConnect)
 - **Smart Contract Factory**: Deploy split contracts on Base
 - **Auto Distribution**: Funds automatically split when received
 - **Dashboard**: View and manage all your split contracts
 - **Transaction History**: Track all distributions on-chain
 - **Base Network**: Deployed on Base Sepolia (testnet) and Base Mainnet
+
+### New Features ✨
+- **📋 Split Templates**: Pre-configured templates (50/50, thirds, team splits) and save custom templates for reuse
+- **📱 QR Code Generation**: Generate and download QR codes for easy payment sharing
+- **📊 Export to CSV**: Export split data and transaction history to CSV files
+- **🏷️ ENS/Basename Support**: Use ENS names (e.g., vitalik.eth) or Basenames instead of addresses
+- **📧 Email Notifications**: Get notified via email when distributions occur (optional)
 
 ## 📁 Project Structure
 
@@ -111,49 +119,47 @@ npm run deploy:sepolia
 
 2. Setup Supabase:
    - Create a project at [https://supabase.com](https://supabase.com)
-   - Run the following SQL to create tables:
+   - Run the SQL migrations in order:
+     1. First, run `supabase-schema.sql` to create the base tables
+     2. Then run `supabase-migration.sql` to add additional fields
+     3. Run `supabase-templates-migration.sql` to add template support
+     4. Run `supabase-email-migration.sql` to add email notifications
+   
+   Or use the combined schema below:
 
 ```sql
--- Create splits table
-CREATE TABLE splits (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  contract_address TEXT NOT NULL UNIQUE,
-  owner_address TEXT NOT NULL,
-  factory_address TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create recipients table
-CREATE TABLE recipients (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  split_id UUID NOT NULL REFERENCES splits(id) ON DELETE CASCADE,
-  wallet_address TEXT NOT NULL,
-  percentage INTEGER NOT NULL CHECK (percentage > 0 AND percentage <= 100)
-);
-
--- Create indexes
-CREATE INDEX idx_splits_owner ON splits(owner_address);
-CREATE INDEX idx_splits_contract ON splits(contract_address);
-CREATE INDEX idx_recipients_split ON recipients(split_id);
+-- See supabase-schema.sql, supabase-migration.sql, 
+-- supabase-templates-migration.sql, and supabase-email-migration.sql
+-- in the project root for the complete database schema
 ```
 
-3. Create `app/.env.local`:
+3. Setup Email Notifications (Optional):
+   - Sign up for [Resend](https://resend.com) (free tier available)
+   - Get your API key from the dashboard
+   - Verify your sending domain (or use their test domain for development)
+
+4. Create `app/.env.local`:
 ```bash
+# Required
 NEXT_PUBLIC_REOWN_PROJECT_ID=your_reown_project_id
 NEXT_PUBLIC_SPLIT_FACTORY_ADDRESS_SEPOLIA=deployed_factory_address
 NEXT_PUBLIC_SPLIT_FACTORY_ADDRESS_BASE=deployed_factory_address
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_DEFAULT_CHAIN_ID=84532
+
+# Optional - Email Notifications
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL="SplitBase <notifications@yourdomain.com>"
 ```
 
-4. Run development server:
+5. Run development server:
 ```bash
 cd app
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000)
+6. Open [http://localhost:3000](http://localhost:3000)
 
 ## 🚀 Usage
 
@@ -161,13 +167,56 @@ npm run dev
 
 1. Connect your wallet
 2. Click "Create New Split"
-3. Add recipient addresses and percentages (must sum to 100%)
-4. Click "Deploy Split"
-5. Confirm the transaction in your wallet
+3. **Option 1**: Add recipient addresses manually
+   - Enter addresses or ENS/Basename (e.g., `vitalik.eth`, `name.base.eth`)
+   - Set percentages (must sum to 100%)
+4. **Option 2**: Use a template
+   - Click "Use Template" button
+   - Choose from preset templates (50/50, thirds, etc.)
+   - Or select one of your saved custom templates
+5. *Optional*: Enable email notifications
+6. Click "Deploy Split"
+7. Confirm the transaction in your wallet
+
+### Using Templates
+
+**Preset Templates:**
+- 50/50 Split
+- Equal Thirds
+- Team Revenue (4 members)
+- Creator Split (80/20)
+- DAO Treasury Split
+- Founder Split (3 members)
+
+**Custom Templates:**
+- Save your current split configuration as a template
+- Reuse templates across multiple splits
+- Delete templates you no longer need
 
 ### Sending Funds to a Split
 
 Simply send ETH to the split contract address. Funds will automatically distribute to all recipients based on their percentages.
+
+### Sharing Your Split
+
+1. **QR Code**: Click "Show QR" to generate a scannable QR code
+   - Download the QR code image
+   - Share with others for easy payments
+2. **Copy Address**: Click "Copy Address" to copy the contract address
+3. **Share Link**: Share the split page URL directly
+
+### Exporting Data
+
+- **Single Split**: Click "Export" on a split details page to export that split's data
+- **All Splits**: Click "Export CSV" on the dashboard to export all your splits
+- **Recipients**: Export detailed recipient information across all splits
+
+### Email Notifications
+
+When enabled, you'll receive emails for:
+- Payment distributions (amount, transaction hash, your share)
+- New split contract deployments
+- Transaction confirmations
 
 ### Manual Distribution
 

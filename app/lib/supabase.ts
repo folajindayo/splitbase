@@ -19,6 +19,8 @@ export interface Split {
   description?: string;
   is_favorite: boolean;
   tags?: string[];
+  owner_email?: string;
+  owner_email_notifications?: boolean;
   created_at: string;
 }
 
@@ -27,5 +29,7 @@ export interface Recipient {
   split_id?: string;
   wallet_address: string;
   percentage: number;
+  email?: string;
+  email_notifications?: boolean;
 }
 

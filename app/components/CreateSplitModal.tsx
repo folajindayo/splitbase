@@ -7,6 +7,9 @@ import { createSplit, getFactoryAddress } from "@/lib/contracts";
 import { saveSplit } from "@/lib/splits";
 import { isValidAddress, validatePercentages, hasDuplicateAddresses } from "@/lib/utils";
 import { DEFAULT_CHAIN_ID } from "@/lib/constants";
+import TemplatesModal from "./TemplatesModal";
+import AddressInput from "./AddressInput";
+import { resolveNameToAddress } from "@/lib/nameResolver";
 
 // Extend Window interface for ethereum provider
 declare global {
@@ -18,6 +21,8 @@ declare global {
 interface Recipient {
   address: string;
   percentage: string;
+  email?: string;
+  emailNotifications?: boolean;
 }
 
 interface CreateSplitModalProps {
@@ -38,6 +43,9 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerEmailNotifications, setOwnerEmailNotifications] = useState(false);
 
   const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
   
@@ -62,6 +70,11 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
     updated[index][field] = value;
     setRecipients(updated);
     setError(""); // Clear error on input
+  };
+
+  const handleTemplateSelect = (templateRecipients: { address: string; percentage: string }[]) => {
+    setRecipients(templateRecipients);
+    setError("");
   };
 
   const validateInputs = (): string | null => {
@@ -120,6 +133,30 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
     setError("");
 
     try {
+      // Resolve any ENS/Basename names to addresses
+      let resolverProvider: BrowserProvider | undefined;
+      if (typeof window !== "undefined" && window.ethereum) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolverProvider = new BrowserProvider(window.ethereum as any);
+      } else if (walletProvider) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolverProvider = new BrowserProvider(walletProvider as any);
+      }
+
+      const recipientAddresses: string[] = [];
+      for (const recipient of recipients) {
+        let recipientAddress = recipient.address;
+        
+        // Try to resolve if it looks like a domain name
+        if (recipientAddress.includes(".eth")) {
+          const resolved = await resolveNameToAddress(recipientAddress, resolverProvider);
+          if (resolved) {
+            recipientAddress = resolved;
+          }
+        }
+        
+        recipientAddresses.push(recipientAddress);
+      }
       console.log("Creating split with chainId:", chainId);
       console.log("Wallet provider type:", walletProvider?.constructor?.name);
       console.log("Is using browser wallet:", isUsingBrowserWallet);
@@ -178,7 +215,6 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
         );
       }
 
-      const recipientAddresses = recipients.map((r) => r.address);
       const percentages = recipients.map((r) => parseInt(r.percentage));
 
       console.log("Recipients:", recipientAddresses);
@@ -203,9 +239,13 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
         recipients.map((r) => ({
           wallet_address: r.address,
           percentage: parseInt(r.percentage),
+          email: r.email,
+          email_notifications: r.emailNotifications,
         })),
         name.trim(),
-        description.trim() || undefined
+        description.trim() || undefined,
+        ownerEmailNotifications ? ownerEmail.trim() : undefined,
+        ownerEmailNotifications
       );
 
       onSuccess();
@@ -290,9 +330,20 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
           </div>
 
           <div className="border-t border-gray-200 pt-6 mb-4">
-            <p className="text-gray-600 mb-4">
-              Add recipients and their split percentages. The total must equal 100%.
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-gray-600">
+                Add recipients and their split percentages. The total must equal 100%.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowTemplatesModal(true)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                disabled={loading}
+              >
+                <span>📋</span>
+                Use Template
+              </button>
+            </div>
           </div>
 
           {/* Recipients List */}
@@ -300,12 +351,10 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
             {recipients.map((recipient, index) => (
               <div key={index} className="flex gap-2 items-start">
                 <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="0x... Wallet Address"
+                  <AddressInput
                     value={recipient.address}
-                    onChange={(e) => updateRecipient(index, "address", e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(value) => updateRecipient(index, "address", value)}
+                    placeholder="0x... or name.eth / name.base.eth"
                     disabled={loading}
                   />
                 </div>
@@ -366,6 +415,45 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
             )}
           </div>
 
+          {/* Email Notifications (Optional) */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h4 className="text-sm font-medium text-gray-900">Email Notifications</h4>
+                <p className="text-xs text-gray-500 mt-0.5">Get notified when your split receives payments</p>
+              </div>
+              <div className="relative inline-block w-11 h-6">
+                <input
+                  id="owner-email-toggle"
+                  type="checkbox"
+                  checked={ownerEmailNotifications}
+                  onChange={(e) => setOwnerEmailNotifications(e.target.checked)}
+                  disabled={loading}
+                  className="sr-only peer"
+                />
+                <label
+                  htmlFor="owner-email-toggle"
+                  className="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-colors peer-checked:bg-blue-600"
+                >
+                  <span className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-5" />
+                </label>
+              </div>
+            </div>
+            
+            {ownerEmailNotifications && (
+              <div className="mt-3">
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  disabled={loading}
+                />
+              </div>
+            )}
+          </div>
+
           {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
@@ -392,6 +480,16 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
           </div>
         </div>
       </div>
+
+      {/* Templates Modal */}
+      {showTemplatesModal && (
+        <TemplatesModal
+          onClose={() => setShowTemplatesModal(false)}
+          onSelectTemplate={handleTemplateSelect}
+          currentRecipients={recipients}
+          splitName={name}
+        />
+      )}
     </div>
   );
 }
