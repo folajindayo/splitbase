@@ -112,10 +112,11 @@ npm run deploy:sepolia
 
 ### Frontend
 
-1. Get a Reown Project ID:
-   - Go to [https://cloud.reown.com](https://cloud.reown.com)
+1. Get a WalletConnect Project ID:
+   - Go to [https://cloud.reown.com](https://cloud.reown.com) (WalletConnect Cloud)
    - Create a new project
    - Copy your Project ID
+   - See the [WalletConnect Documentation](https://docs.walletconnect.network/) for more details
 
 2. Setup Supabase:
    - Create a project at [https://supabase.com](https://supabase.com)
@@ -258,10 +259,17 @@ npm test
 
 ## 📚 Resources
 
+### External Documentation
 - [Base Documentation](https://docs.base.org)
-- [Reown AppKit Docs](https://docs.reown.com/appkit/overview)
+- [WalletConnect Documentation](https://docs.walletconnect.network/)
 - [Hardhat Documentation](https://hardhat.org/docs)
 - [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+
+### SplitBase Documentation
+- [WalletConnect Integration Guide](./WALLETCONNECT_INTEGRATION.md) - How we integrate with WalletConnect
+- [Implementation Summary](./IMPLEMENTATION_SUMMARY.md) - New features technical details
+- [Quick Start Guide](./QUICK_START.md) - Get started in 5 minutes
 
 ## 🤝 Contributing
 
@@ -273,8 +281,11 @@ MIT License
 
 ## 🙏 Acknowledgments
 
-- Built on Base
-- Powered by Reown (WalletConnect)
-- UI styled with Tailwind CSS
-- Database by Supabase
+- Built on **Base** blockchain
+- Powered by **WalletConnect** (via Reown AppKit)
+- UI styled with **Tailwind CSS**
+- Database by **Supabase**
+- Smart contracts secured with **OpenZeppelin**
+
+For more information, visit the [WalletConnect Documentation](https://docs.walletconnect.network/)
 
