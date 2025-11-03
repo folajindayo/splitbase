@@ -110,21 +110,11 @@ Stay informed with automatic email alerts!
 ---
 
 ### 6. 🌙 **Dark Mode**
-**Status:** NEW - Fully Implemented
+**Status:** REMOVED - Light Mode Only
 
-Eye-friendly dark theme with one-click toggle!
+Keeping the UI clean and consistent with a single light theme.
 
-**Features:**
-- Light/Dark mode toggle
-- Remembers user preference
-- System preference detection
-- Smooth transitions
-- All components styled
-
-**Files:**
-- `app/lib/theme.ts`
-- `app/components/ThemeToggle.tsx`
-- Updated `Navigation.tsx` with dark mode support
+**Decision:** Dark mode was removed to maintain simplicity and focus on core features.
 
 ---
 
