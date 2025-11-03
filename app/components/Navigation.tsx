@@ -40,6 +40,16 @@ export default function Navigation() {
                 >
                   Dashboard
                 </Link>
+                <Link
+                  href="/escrow"
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    pathname?.startsWith('/escrow')
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Escrow
+                </Link>
                 <div className="text-sm text-gray-500">
                   {truncateAddress(address)}
                 </div>

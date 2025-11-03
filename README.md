@@ -20,6 +20,7 @@ SplitBase allows creators, teams, and DAOs to receive payments into a single wal
 - **📊 Export to CSV**: Export split data and transaction history to CSV files
 - **🏷️ ENS/Basename Support**: Use ENS names (e.g., vitalik.eth) or Basenames instead of addresses
 - **📧 Email Notifications**: Get notified via email when distributions occur (optional)
+- **🔒 Escrow System**: Secure payment escrow with buyer-seller protection, time locks, and milestone-based releases (no smart contracts required)
 
 ## 📁 Project Structure
 
@@ -125,6 +126,7 @@ npm run deploy:sepolia
      2. Then run `supabase-migration.sql` to add additional fields
      3. Run `supabase-templates-migration.sql` to add template support
      4. Run `supabase-email-migration.sql` to add email notifications
+     5. Run `supabase-escrow-migration.sql` to add escrow system tables
    
    Or use the combined schema below:
 
@@ -222,6 +224,94 @@ When enabled, you'll receive emails for:
 ### Manual Distribution
 
 If needed, you can manually trigger distribution by clicking "Distribute Now" on the split details page.
+
+## 🔒 Escrow System
+
+SplitBase includes a comprehensive escrow system for secure payment transactions between buyers and sellers.
+
+### Creating an Escrow
+
+1. Connect your wallet and navigate to the **Escrow** page
+2. Click "Create Escrow"
+3. **Step 1: Basic Information**
+   - Enter escrow title and description
+   - Provide seller's address (or ENS/Basename)
+   - Set the total amount and currency
+4. **Step 2: Choose Escrow Type**
+   - **Simple Escrow**: Buyer deposits, seller delivers, buyer releases
+   - **Time-Locked Escrow**: Same as simple but with auto-release after a deadline
+   - **Milestone Escrow**: Release funds in stages as milestones are completed
+5. **Step 3: Configuration**
+   - For time-locked: Set release date and enable auto-release (optional)
+   - For milestone: Define milestones with titles, descriptions, and percentage splits
+6. **Step 4: Review & Create**
+   - Review all details and create the escrow agreement
+
+### Escrow Types
+
+**Simple Escrow:**
+- Buyer creates escrow and deposits funds
+- Seller delivers goods/services
+- Buyer approves and releases payment
+- Best for straightforward transactions
+
+**Time-Locked Escrow:**
+- Same as simple escrow with a deadline
+- Funds can be released after the specified date
+- Optional auto-release feature
+- Protects both parties with time constraints
+
+**Milestone Escrow:**
+- Payment released in stages (e.g., 25%, 50%, 25%)
+- Seller completes each milestone
+- Buyer reviews and releases payment for each stage
+- Perfect for long-term projects and phased deliveries
+
+### Using Escrow as a Buyer
+
+1. **Create Escrow**: Set up the agreement with seller details
+2. **Deposit Funds**: Send the agreed amount to the seller's address
+3. **Mark as Funded**: Provide the transaction hash to confirm deposit
+4. **Wait for Delivery**: Seller completes the work/delivers goods
+5. **Release Funds**: Approve release when satisfied with delivery
+
+For milestone escrows:
+- Review each completed milestone
+- Release payment stage by stage
+- Track progress with visual milestone tracker
+
+### Using Escrow as a Seller
+
+1. **Receive Notification**: Get notified when an escrow is created
+2. **Wait for Funding**: Buyer deposits the agreed amount
+3. **Deliver Work**: Complete the work or deliver goods/services
+4. **Request Release**: 
+   - For simple/time-locked: Wait for buyer to release
+   - For milestone: Mark milestones as completed for buyer review
+
+### Escrow Dashboard
+
+The escrow dashboard provides:
+- **Filter by Role**: View escrows where you're the buyer or seller
+- **Filter by Status**: See active, completed, or all escrows
+- **Search**: Find escrows by title, description, or addresses
+- **Statistics**: Track total escrows, amounts, and completion rates
+- **Quick Actions**: View details, release funds, or manage escrows
+
+### Escrow Security
+
+- **No Custody**: Funds are sent directly to seller's address (we only track agreements)
+- **Database Tracking**: Escrow logic stored in database, not blockchain
+- **Activity Logging**: All actions recorded with timestamps and actor addresses
+- **Email Notifications**: Optional alerts for key events (funded, released, milestones)
+- **Transparent**: All parties can view escrow status and activity log
+
+### Important Notes
+
+- This escrow system **does not hold funds** - it tracks agreements only
+- Funds are sent directly to the seller's address
+- Both parties should agree to use SplitBase for tracking before creating an escrow
+- The system is designed for trust-minimized transactions with clear deliverables
 
 ## 🧪 Testing
 
