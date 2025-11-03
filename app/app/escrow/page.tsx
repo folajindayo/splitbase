@@ -106,33 +106,68 @@ export default function EscrowPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Escrow Dashboard</h1>
-          <p className="text-gray-600">
-            Manage your escrow agreements and track payments
-          </p>
+        <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">🔒</span>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Escrow Dashboard</h1>
+              <p className="text-gray-600 mt-1">
+                Manage your escrow agreements and track payments
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="text-sm text-gray-600 mb-1">Total Escrows</div>
-            <div className="text-3xl font-bold text-gray-900">{stats.totalEscrows}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-600 mb-1">Total Escrows</div>
+                <div className="text-3xl font-bold text-gray-900">{stats.totalEscrows}</div>
+              </div>
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">📋</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="text-sm text-gray-600 mb-1">As Buyer</div>
-            <div className="text-3xl font-bold text-blue-600">{stats.asBuyer}</div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-600 mb-1">As Buyer</div>
+                <div className="text-3xl font-bold text-blue-600">{stats.asBuyer}</div>
+              </div>
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">💳</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="text-sm text-gray-600 mb-1">As Seller</div>
-            <div className="text-3xl font-bold text-green-600">{stats.asSeller}</div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-600 mb-1">As Seller</div>
+                <div className="text-3xl font-bold text-green-600">{stats.asSeller}</div>
+              </div>
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">💰</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="text-sm text-gray-600 mb-1">Active</div>
-            <div className="text-3xl font-bold text-purple-600">{stats.activeEscrows}</div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-600 mb-1">Active</div>
+                <div className="text-3xl font-bold text-orange-600">{stats.activeEscrows}</div>
+              </div>
+              <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">⚡</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -172,7 +207,7 @@ export default function EscrowPage() {
 
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium whitespace-nowrap"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium whitespace-nowrap shadow-sm hover:shadow transition-all"
               >
                 + Create Escrow
               </button>
