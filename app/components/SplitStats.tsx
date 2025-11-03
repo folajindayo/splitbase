@@ -81,22 +81,22 @@ export default function SplitStats({ splits }: SplitStatsProps) {
       </div>
 
       {/* Recipient Distribution Chart */}
-      <div className="md:col-span-2 lg:col-span-4 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <div className="md:col-span-2 lg:col-span-4 bg-white rounded-xl p-5 border border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-900 mb-4">
           Recipient Distribution
         </h3>
         <div className="space-y-3">
           {recipientDistribution.map((item, idx) => (
             <div key={idx}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-gray-600">
                   {item.count} recipients
                 </span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <span className="text-sm font-semibold text-gray-900">
                   {item.splits} splits
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-blue-600 h-2 rounded-full transition-all"
                   style={{ width: `${(item.splits / maxSplits) * 100}%` }}

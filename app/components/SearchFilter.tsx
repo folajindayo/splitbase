@@ -29,7 +29,7 @@ export default function SearchFilter({
   const [showFilters, setShowFilters] = useState(false);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 mb-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
       {/* Search Bar */}
       <div className="flex gap-3 items-center">
         <div className="flex-1 relative">
@@ -53,7 +53,7 @@ export default function SearchFilter({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search splits by name, address, or description..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {searchQuery && (
             <button
@@ -82,8 +82,8 @@ export default function SearchFilter({
           onClick={() => setShowFilters(!showFilters)}
           className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2 ${
             showFilters
-              ? "bg-blue-50 dark:bg-blue-900 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300"
-              : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              ? "bg-blue-50 border-blue-300 text-blue-700"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
           }`}
         >
           <svg
@@ -105,10 +105,10 @@ export default function SearchFilter({
 
       {/* Filter Options */}
       {showFilters && (
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid md:grid-cols-2 gap-4">
+        <div className="mt-4 pt-4 border-t border-gray-200 grid md:grid-cols-2 gap-4">
           {/* Sort Options */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Sort By
             </label>
             <div className="flex flex-wrap gap-2">
@@ -124,7 +124,7 @@ export default function SearchFilter({
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     sortBy === option.value
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {option.label}
@@ -135,7 +135,7 @@ export default function SearchFilter({
 
           {/* View Options */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               View
             </label>
             <div className="flex flex-wrap gap-2">
@@ -149,7 +149,7 @@ export default function SearchFilter({
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     filterBy === option.value
                       ? "bg-emerald-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {option.label}
@@ -162,7 +162,7 @@ export default function SearchFilter({
 
       {/* Results Count */}
       {(searchQuery || filterBy !== "all") && (
-        <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+        <div className="mt-3 text-sm text-gray-600">
           Showing {filteredCount} of {totalCount} splits
           {searchQuery && ` matching "${searchQuery}"`}
         </div>

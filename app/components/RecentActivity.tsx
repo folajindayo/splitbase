@@ -19,9 +19,9 @@ export default function RecentActivity({ splits }: RecentActivityProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900">
           Recent Activity
         </h3>
         <svg
@@ -44,17 +44,17 @@ export default function RecentActivity({ splits }: RecentActivityProps) {
           <Link
             key={split.id}
             href={`/splits/${split.contract_address}`}
-            className="block p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+            className="block p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  <span className="text-sm font-medium text-gray-900 truncate">
                     {split.name || "Untitled Split"}
                   </span>
                   {split.is_favorite && <span>⭐</span>}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   <span>Created {formatDate(split.created_at)}</span>
                   <span>•</span>
                   <span>{split.recipients.length} recipients</span>
