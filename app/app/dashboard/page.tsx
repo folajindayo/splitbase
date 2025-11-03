@@ -10,6 +10,9 @@ import { exportAllSplitsToCSV } from "@/lib/export";
 import CreateSplitModal from "@/components/CreateSplitModal";
 import DashboardStats from "@/components/DashboardStats";
 import NetworkChecker from "@/components/NetworkChecker";
+import SearchFilter, { SortOption, FilterOption } from "@/components/SearchFilter";
+import SplitStats from "@/components/SplitStats";
+import RecentActivity from "@/components/RecentActivity";
 import { useAppKitNetwork } from "@reown/appkit/react";
 import { DEFAULT_CHAIN_ID } from "@/lib/constants";
 
@@ -21,6 +24,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterTab, setFilterTab] = useState<"all" | "favorites">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [filterBy, setFilterBy] = useState<FilterOption>("all");
 
   const chainId = caipNetwork?.id ? parseInt(caipNetwork.id.toString()) : DEFAULT_CHAIN_ID;
 
@@ -80,9 +86,38 @@ export default function Dashboard() {
     }
   };
 
-  const filteredSplits = filterTab === "favorites" 
-    ? splits.filter(split => split.is_favorite) 
-    : splits;
+  // Apply search filter
+  let filteredSplits = splits;
+  
+  // Search
+  if (searchQuery) {
+    filteredSplits = filteredSplits.filter(split => 
+      split.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      split.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      split.contract_address.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+  
+  // Filter by favorites
+  if (filterBy === "favorites") {
+    filteredSplits = filteredSplits.filter(split => split.is_favorite);
+  }
+  
+  // Sort
+  filteredSplits = [...filteredSplits].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case "oldest":
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "name":
+        return (a.name || "").localeCompare(b.name || "");
+      case "recipients":
+        return b.recipients.length - a.recipients.length;
+      default:
+        return 0;
+    }
+  });
 
   if (!isConnected) {
     return null;
@@ -120,6 +155,20 @@ export default function Dashboard() {
         {/* Network Warning */}
         <NetworkChecker />
 
+        {/* Search and Filter */}
+        {!loading && splits.length > 0 && (
+          <SearchFilter
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            filterBy={filterBy}
+            onFilterChange={setFilterBy}
+            totalCount={splits.length}
+            filteredCount={filteredSplits.length}
+          />
+        )}
+
         {/* Filter Tabs */}
         {!loading && splits.length > 0 && (
           <div className="flex items-center gap-2 mb-6">
@@ -148,7 +197,11 @@ export default function Dashboard() {
 
         {/* Dashboard Stats */}
         {!loading && splits.length > 0 && (
-          <DashboardStats splits={splits} />
+          <>
+            <DashboardStats splits={splits} />
+            <SplitStats splits={splits} />
+            <RecentActivity splits={splits} />
+          </>
         )}
 
         {/* Loading State */}
