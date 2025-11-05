@@ -151,6 +151,10 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_DEFAULT_CHAIN_ID=84532
 
+# Custodial Escrow - Required for Escrow System
+NEXT_PUBLIC_CUSTODIAL_WALLET_ADDRESS=your_custodial_wallet_address
+NEXT_PUBLIC_RPC_URL=https://mainnet.base.org
+
 # Optional - Email Notifications
 RESEND_API_KEY=your_resend_api_key
 RESEND_FROM_EMAIL="SplitBase <notifications@yourdomain.com>"
@@ -300,18 +304,21 @@ The escrow dashboard provides:
 
 ### Escrow Security
 
-- **No Custody**: Funds are sent directly to seller's address (we only track agreements)
-- **Database Tracking**: Escrow logic stored in database, not blockchain
+- **🔒 Secure Custody**: SplitBase holds funds in a secure custodial wallet as the trust layer
+- **Blockchain Verification**: All deposits are verified on-chain before marking as funded
+- **Buyer Control**: Only the buyer can approve fund release
+- **Database Tracking**: Escrow agreements and milestones stored in database
 - **Activity Logging**: All actions recorded with timestamps and actor addresses
 - **Email Notifications**: Optional alerts for key events (funded, released, milestones)
 - **Transparent**: All parties can view escrow status and activity log
 
 ### Important Notes
 
-- This escrow system **does not hold funds** - it tracks agreements only
-- Funds are sent directly to the seller's address
-- Both parties should agree to use SplitBase for tracking before creating an escrow
-- The system is designed for trust-minimized transactions with clear deliverables
+- **SplitBase acts as the trust layer** - funds are held in a secure custodial wallet
+- Deposits are verified on the blockchain before marking as funded
+- Buyers retain full control - only they can approve fund release
+- Both parties should agree to use SplitBase escrow before creating an agreement
+- The system is designed for secure transactions with clear deliverables and milestones
 
 ## 🧪 Testing
 
