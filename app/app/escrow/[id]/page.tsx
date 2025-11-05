@@ -85,7 +85,11 @@ export default function EscrowDetailsPage() {
   const handleRelease = async () => {
     if (!escrow || !address) return;
 
-    if (!confirm("Are you sure you want to release the escrow funds to the seller?")) {
+    if (!confirm(
+      `Are you sure you want to release ${escrow.total_amount} ${escrow.currency} to the seller?\n\n` +
+      `This will send the funds from our custodial wallet to:\n${escrow.seller_address}\n\n` +
+      `This action cannot be undone.`
+    )) {
       return;
     }
 
@@ -93,10 +97,34 @@ export default function EscrowDetailsPage() {
     setError("");
 
     try {
-      await releaseEscrow(escrow.id, address);
+      // Call API to release funds from custodial wallet
+      const response = await fetch('/api/escrow/release', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          escrowId: escrow.id,
+          actorAddress: address,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to release funds');
+      }
+
+      console.log('Funds released successfully:', data.txHash);
+      
+      // Reload escrow to show updated status
       await loadEscrow();
+      
+      alert(`Funds released successfully!\nTransaction: ${data.txHash}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to release escrow");
+      const errorMessage = err instanceof Error ? err.message : "Failed to release escrow";
+      setError(errorMessage);
+      alert(`Error: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
