@@ -15,6 +15,8 @@ import MilestoneProgress from "@/components/MilestoneProgress";
 import TimeLockCountdown from "@/components/TimeLockCountdown";
 import Link from "next/link";
 import { exportEscrowToCSV } from "@/lib/escrowExport";
+import DisputeModal from "@/components/DisputeModal";
+import { openDispute } from "@/lib/escrow";
 
 export default function EscrowDetailsPage() {
   const { address, isConnected } = useAppKitAccount();
@@ -27,6 +29,7 @@ export default function EscrowDetailsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [txHash, setTxHash] = useState("");
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
 
   useEffect(() => {
     if (!isConnected) {
@@ -115,6 +118,13 @@ export default function EscrowDetailsPage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleDispute = async (reason: string) => {
+    if (!escrow || !address) return;
+
+    await openDispute(escrow.id, address, reason);
+    await loadEscrow();
   };
 
   if (!isConnected || !address) {
@@ -311,13 +321,22 @@ export default function EscrowDetailsPage() {
                   </button>
                 </div>
               </div>
-              <button
-                onClick={handleCancel}
-                disabled={actionLoading}
-                className="w-full px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                Cancel Escrow
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDisputeModal(true)}
+                  disabled={actionLoading}
+                  className="flex-1 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  Open Dispute
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={actionLoading}
+                  className="flex-1 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  Cancel Escrow
+                </button>
+              </div>
             </div>
           )}
 
@@ -362,6 +381,16 @@ export default function EscrowDetailsPage() {
             <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
               <div className="font-medium text-gray-900 mb-1">Escrow Cancelled</div>
               <p className="text-sm text-gray-700">This escrow has been cancelled.</p>
+            </div>
+          )}
+
+          {/* Disputed */}
+          {escrow.status === 'disputed' && (
+            <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+              <div className="font-medium text-red-900 mb-1">⚠️ Escrow Under Dispute</div>
+              <p className="text-sm text-red-700">
+                This escrow has been disputed. Both parties should work towards a resolution.
+              </p>
             </div>
           )}
 
@@ -426,6 +455,15 @@ export default function EscrowDetailsPage() {
           </div>
         )}
       </div>
+
+      {/* Dispute Modal */}
+      {showDisputeModal && (
+        <DisputeModal
+          onClose={() => setShowDisputeModal(false)}
+          onSubmit={handleDispute}
+          escrowTitle={escrow.title}
+        />
+      )}
     </div>
   );
 }
