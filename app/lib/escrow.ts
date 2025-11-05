@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { getCustodialWalletAddress, generatePaymentReference, verifyTransaction } from "./wallet";
+import { generateEscrowWallet, encryptPrivateKey } from "./escrowCustody";
 
 // Escrow Types
 export interface Escrow {
@@ -15,6 +15,8 @@ export interface Escrow {
   release_date?: string;
   auto_release: boolean;
   deposit_address?: string;
+  custody_wallet_address?: string;
+  encrypted_private_key?: string;
   transaction_hash?: string;
   funded_at?: string;
   released_at?: string;
@@ -73,8 +75,9 @@ export interface CreateEscrowInput {
 export async function createEscrow(data: CreateEscrowInput): Promise<string> {
   const { milestones, ...escrowData } = data;
 
-  // Get custodial wallet address (where funds will be held)
-  const custodialWallet = getCustodialWalletAddress();
+  // Generate custody wallet for this escrow
+  const { address: custodyAddress, privateKey } = generateEscrowWallet();
+  const encryptedKey = encryptPrivateKey(privateKey);
 
   // Insert escrow
   const { data: escrow, error: escrowError } = await supabase
@@ -85,7 +88,9 @@ export async function createEscrow(data: CreateEscrowInput): Promise<string> {
       seller_address: escrowData.seller_address.toLowerCase(),
       currency: escrowData.currency || 'ETH',
       auto_release: escrowData.auto_release || false,
-      deposit_address: custodialWallet, // Set custodial wallet as deposit address
+      custody_wallet_address: custodyAddress,
+      encrypted_private_key: encryptedKey,
+      deposit_address: custodyAddress, // Use custody wallet as deposit address
     })
     .select()
     .single();
@@ -234,35 +239,12 @@ export async function updateEscrowStatus(
   }
 }
 
-// Mark escrow as funded (with custody verification)
+// Mark escrow as funded
 export async function markEscrowAsFunded(
   escrowId: string,
   transactionHash: string,
   actorAddress: string
 ): Promise<void> {
-  // Get escrow details first
-  const { data: escrow, error: fetchError } = await supabase
-    .from("escrows")
-    .select("*")
-    .eq("id", escrowId)
-    .single();
-
-  if (fetchError || !escrow) {
-    throw new Error("Escrow not found");
-  }
-
-  // Verify the transaction on blockchain
-  const verification = await verifyTransaction(
-    transactionHash,
-    parseFloat(escrow.total_amount.toString()),
-    escrow.deposit_address
-  );
-
-  if (!verification.valid) {
-    throw new Error(verification.error || "Transaction verification failed");
-  }
-
-  // Update escrow as funded
   const { error } = await supabase
     .from("escrows")
     .update({ 
@@ -277,12 +259,7 @@ export async function markEscrowAsFunded(
     throw new Error(`Failed to mark escrow as funded: ${error.message}`);
   }
 
-  await logActivity(
-    escrowId, 
-    "escrow_funded", 
-    actorAddress, 
-    `Escrow funded with transaction ${transactionHash}. Funds held in custody.`
-  );
+  await logActivity(escrowId, "escrow_funded", actorAddress, "Escrow funded with transaction");
 }
 
 // Release escrow funds (for simple and time-locked escrows)
