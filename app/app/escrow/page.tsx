@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getUserEscrows, getEscrowStats, EscrowWithMilestones } from "@/lib/escrow";
 import CreateEscrowModal from "@/components/CreateEscrowModal";
 import EscrowCard from "@/components/EscrowCard";
+import EscrowQuickStats from "@/components/EscrowQuickStats";
 import { exportAllEscrowsToCSV } from "@/lib/escrowExport";
 
 export default function EscrowPage() {
@@ -143,6 +144,11 @@ export default function EscrowPage() {
             </div>
           </div>
         </div>
+
+        {/* Quick Stats */}
+        {escrows.length > 0 && (
+          <EscrowQuickStats escrows={escrows} userAddress={address} />
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
