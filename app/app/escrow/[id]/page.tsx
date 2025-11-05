@@ -18,6 +18,7 @@ import { exportEscrowToCSV } from "@/lib/escrowExport";
 import DisputeModal from "@/components/DisputeModal";
 import ShareEscrowModal from "@/components/ShareEscrowModal";
 import EscrowNotes from "@/components/EscrowNotes";
+import FundingInstructions from "@/components/FundingInstructions";
 import { openDispute } from "@/lib/escrow";
 
 export default function EscrowDetailsPage() {
@@ -30,7 +31,6 @@ export default function EscrowDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
-  const [txHash, setTxHash] = useState("");
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -63,7 +63,7 @@ export default function EscrowDetailsPage() {
     }
   };
 
-  const handleMarkAsFunded = async () => {
+  const handleMarkAsFunded = async (txHash: string) => {
     if (!escrow || !address || !txHash) {
       setError("Please provide a transaction hash");
       return;
@@ -75,9 +75,8 @@ export default function EscrowDetailsPage() {
     try {
       await markEscrowAsFunded(escrow.id, txHash, address);
       await loadEscrow();
-      setTxHash("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to mark as funded");
+      setError(err instanceof Error ? err.message : "Failed to verify and mark as funded");
     } finally {
       setActionLoading(false);
     }
@@ -307,31 +306,18 @@ export default function EscrowDetailsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <h3 className="text-lg font-semibold mb-4">Actions</h3>
 
-          {/* Pending - Buyer can mark as funded */}
+          {/* Pending - Buyer can fund escrow */}
           {escrow.status === 'pending' && userIsBuyer && (
             <div className="space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                <div className="font-medium text-yellow-900 mb-2">⚠️ Waiting for Deposit</div>
-                <p className="text-sm text-yellow-700 mb-3">
-                  Send {escrow.total_amount} {escrow.currency} to the seller's address, then mark as funded.
-                </p>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    placeholder="Transaction Hash"
-                    value={txHash}
-                    onChange={(e) => setTxHash(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={handleMarkAsFunded}
-                    disabled={actionLoading || !txHash}
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow transition-all"
-                  >
-                    {actionLoading ? "Processing..." : "Mark as Funded"}
-                  </button>
-                </div>
-              </div>
+              <FundingInstructions
+                escrowId={escrow.id}
+                escrowTitle={escrow.title}
+                amount={parseFloat(escrow.total_amount.toString())}
+                currency={escrow.currency}
+                depositAddress={escrow.deposit_address || ""}
+                onFunded={handleMarkAsFunded}
+                loading={actionLoading}
+              />
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDisputeModal(true)}
