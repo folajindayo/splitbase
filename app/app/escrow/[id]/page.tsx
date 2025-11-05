@@ -16,6 +16,7 @@ import TimeLockCountdown from "@/components/TimeLockCountdown";
 import Link from "next/link";
 import { exportEscrowToCSV } from "@/lib/escrowExport";
 import DisputeModal from "@/components/DisputeModal";
+import ShareEscrowModal from "@/components/ShareEscrowModal";
 import { openDispute } from "@/lib/escrow";
 
 export default function EscrowDetailsPage() {
@@ -30,6 +31,7 @@ export default function EscrowDetailsPage() {
   const [error, setError] = useState("");
   const [txHash, setTxHash] = useState("");
   const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     if (!isConnected) {
@@ -193,12 +195,20 @@ export default function EscrowDetailsPage() {
               </svg>
               Back to Dashboard
             </Link>
-            <button
-              onClick={() => exportEscrowToCSV(escrow)}
-              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm"
-            >
-              📥 Export CSV
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm"
+              >
+                🔗 Share
+              </button>
+              <button
+                onClick={() => exportEscrowToCSV(escrow)}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm"
+              >
+                📥 Export
+              </button>
+            </div>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <div className="flex justify-between items-start">
@@ -462,6 +472,15 @@ export default function EscrowDetailsPage() {
           onClose={() => setShowDisputeModal(false)}
           onSubmit={handleDispute}
           escrowTitle={escrow.title}
+        />
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ShareEscrowModal
+          escrowId={escrow.id}
+          escrowTitle={escrow.title}
+          onClose={() => setShowShareModal(false)}
         />
       )}
     </div>
