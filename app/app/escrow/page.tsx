@@ -16,8 +16,9 @@ export default function EscrowPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterRole, setFilterRole] = useState<'all' | 'buyer' | 'seller'>('all');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed' | 'disputed'>('all');
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
   const [stats, setStats] = useState({
     totalEscrows: 0,
     asBuyer: 0,
@@ -70,8 +71,8 @@ export default function EscrowPage() {
     loadStats();
   };
 
-  // Filter escrows
-  const filteredEscrows = escrows.filter((escrow) => {
+  // Filter and sort escrows
+  let filteredEscrows = escrows.filter((escrow) => {
     // Role filter
     if (filterRole === 'buyer' && escrow.buyer_address.toLowerCase() !== address?.toLowerCase()) {
       return false;
@@ -87,6 +88,9 @@ export default function EscrowPage() {
     if (filterStatus === 'completed' && escrow.status !== 'released') {
       return false;
     }
+    if (filterStatus === 'disputed' && escrow.status !== 'disputed') {
+      return false;
+    }
 
     // Search filter
     if (searchQuery) {
@@ -100,6 +104,22 @@ export default function EscrowPage() {
     }
 
     return true;
+  });
+
+  // Sort escrows
+  filteredEscrows = [...filteredEscrows].sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case 'oldest':
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case 'amount_high':
+        return parseFloat(b.total_amount.toString()) - parseFloat(a.total_amount.toString());
+      case 'amount_low':
+        return parseFloat(a.total_amount.toString()) - parseFloat(b.total_amount.toString());
+      default:
+        return 0;
+    }
   });
 
   if (!isConnected || !address) {
@@ -185,11 +205,22 @@ export default function EscrowPage() {
               />
             </div>
 
-            <div className="flex gap-2 w-full md:w-auto">
+            <div className="flex gap-2 w-full md:w-auto flex-wrap">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'amount_high' | 'amount_low')}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="amount_high">Amount: High to Low</option>
+                <option value="amount_low">Amount: Low to High</option>
+              </select>
+
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value as 'all' | 'buyer' | 'seller')}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               >
                 <option value="all">All Roles</option>
                 <option value="buyer">As Buyer</option>
@@ -198,12 +229,13 @@ export default function EscrowPage() {
 
               <select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'completed')}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'completed' | 'disputed')}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
+                <option value="disputed">Disputed</option>
               </select>
 
               {escrows.length > 0 && (
