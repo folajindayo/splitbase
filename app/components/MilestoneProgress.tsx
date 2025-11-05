@@ -79,14 +79,57 @@ export default function MilestoneProgress({
       return;
     }
 
+    const milestone = milestones.find(m => m.id === milestoneId);
+    if (!milestone) return;
+
+    const milestoneAmount = parseFloat(milestone.amount.toString());
+
+    if (!confirm(
+      `Release milestone: "${milestone.title}"?\n\n` +
+      `Amount: ${milestoneAmount} ${currency}\n\n` +
+      `This will send funds from our custodial wallet to the seller.\n` +
+      `This action cannot be undone.`
+    )) {
+      return;
+    }
+
     setLoading(milestoneId);
     setError("");
 
     try {
-      await releaseMilestone(milestoneId, userAddress);
+      // Call API to release milestone funds from custodial wallet
+      const response = await fetch('/api/escrow/milestone/release', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          escrowId,
+          milestoneId,
+          actorAddress: userAddress,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to release milestone funds');
+      }
+
+      console.log('Milestone funds released successfully:', data.txHash);
+      
+      // Reload escrow to show updated status
       onUpdate();
+      
+      alert(
+        `Milestone released successfully!\n\n` +
+        `Amount: ${data.milestoneAmount} ${currency}\n` +
+        `Transaction: ${data.txHash}\n\n` +
+        (data.allMilestonesReleased ? '🎉 All milestones completed! Escrow is now released.' : '')
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to release milestone");
+      const errorMessage = err instanceof Error ? err.message : "Failed to release milestone";
+      setError(errorMessage);
     } finally {
       setLoading(null);
     }
