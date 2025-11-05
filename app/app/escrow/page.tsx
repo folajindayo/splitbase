@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getUserEscrows, getEscrowStats, EscrowWithMilestones } from "@/lib/escrow";
 import CreateEscrowModal from "@/components/CreateEscrowModal";
 import EscrowCard from "@/components/EscrowCard";
+import { exportAllEscrowsToCSV } from "@/lib/escrowExport";
 
 export default function EscrowPage() {
   const { address, isConnected } = useAppKitAccount();
@@ -204,6 +205,15 @@ export default function EscrowPage() {
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
               </select>
+
+              {escrows.length > 0 && (
+                <button
+                  onClick={() => exportAllEscrowsToCSV(escrows)}
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium whitespace-nowrap"
+                >
+                  📥 Export CSV
+                </button>
+              )}
 
               <button
                 onClick={() => setShowCreateModal(true)}
