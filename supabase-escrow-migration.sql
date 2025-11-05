@@ -71,5 +71,7 @@ COMMENT ON TABLE escrow_activities IS 'Activity log for all escrow actions';
 COMMENT ON COLUMN escrows.escrow_type IS 'Type: simple, time_locked, or milestone';
 COMMENT ON COLUMN escrows.status IS 'Status: pending, funded, released, disputed, cancelled, or expired';
 COMMENT ON COLUMN escrows.auto_release IS 'Whether to auto-release after release_date';
-COMMENT ON COLUMN escrows.deposit_address IS 'Address where buyer should deposit funds';
+COMMENT ON COLUMN escrows.deposit_address IS 'Custodial wallet address where SplitBase holds funds';
+COMMENT ON COLUMN escrows.transaction_hash IS 'Blockchain transaction hash of deposit for verification';
+COMMENT ON COLUMN escrows.funded_at IS 'Timestamp when funds were deposited and verified';
 
