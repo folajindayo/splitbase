@@ -355,6 +355,15 @@ export async function cancelEscrow(escrowId: string, actorAddress: string): Prom
   await updateEscrowStatus(escrowId, 'cancelled', actorAddress, "Escrow cancelled");
 }
 
+// Open dispute on an escrow
+export async function openDispute(
+  escrowId: string,
+  actorAddress: string,
+  reason: string
+): Promise<void> {
+  await updateEscrowStatus(escrowId, 'disputed', actorAddress, `Dispute opened: ${reason}`);
+}
+
 // Log activity
 export async function logActivity(
   escrowId: string,
