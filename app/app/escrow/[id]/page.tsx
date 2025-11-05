@@ -17,6 +17,7 @@ import Link from "next/link";
 import { exportEscrowToCSV } from "@/lib/escrowExport";
 import DisputeModal from "@/components/DisputeModal";
 import ShareEscrowModal from "@/components/ShareEscrowModal";
+import EscrowNotes from "@/components/EscrowNotes";
 import { openDispute } from "@/lib/escrow";
 
 export default function EscrowDetailsPage() {
@@ -428,15 +429,25 @@ export default function EscrowDetailsPage() {
           )}
         </div>
 
+        {/* Notes & Comments */}
+        <div className="mb-8">
+          <EscrowNotes
+            escrowId={escrow.id}
+            activities={escrow.activities}
+            userAddress={address}
+            onUpdate={loadEscrow}
+          />
+        </div>
+
         {/* Activity Log */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold mb-4">Activity Log</h3>
           
-          {escrow.activities.length === 0 ? (
+          {escrow.activities.filter(a => a.action_type !== 'note_added').length === 0 ? (
             <p className="text-gray-600 text-center py-8">No activity yet</p>
           ) : (
             <div className="space-y-4">
-              {escrow.activities.map((activity) => (
+              {escrow.activities.filter(a => a.action_type !== 'note_added').map((activity) => (
                 <div
                   key={activity.id}
                   className="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0"
