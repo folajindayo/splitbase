@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { generateEscrowWallet, encryptPrivateKey } from "./escrowCustody";
+import { logCustodyAudit } from "./custodyAudit";
 
 // Escrow Types
 export interface Escrow {
@@ -98,6 +99,27 @@ export async function createEscrow(data: CreateEscrowInput): Promise<string> {
   if (escrowError) {
     throw new Error(`Failed to create escrow: ${escrowError.message}`);
   }
+
+  // Log custody wallet creation
+  await logCustodyAudit({
+    escrow_id: escrow.id,
+    action_type: "wallet_created",
+    actor_address: escrowData.buyer_address,
+    custody_address: custodyAddress,
+    metadata: {
+      escrow_type: escrowData.escrow_type,
+      total_amount: escrowData.total_amount,
+      currency: escrowData.currency || 'ETH',
+    },
+  });
+
+  // Log key encryption
+  await logCustodyAudit({
+    escrow_id: escrow.id,
+    action_type: "key_encrypted",
+    actor_address: escrowData.buyer_address,
+    custody_address: custodyAddress,
+  });
 
   // Insert milestones if provided
   if (milestones && milestones.length > 0) {
