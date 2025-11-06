@@ -133,7 +133,25 @@ export default function EscrowDetailsPage() {
     setError("");
 
     try {
-      await releaseEscrow(escrow.id, address);
+      // Call API to release funds from custody wallet
+      const response = await fetch("/api/escrow/release-funds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          escrowId: escrow.id,
+          releasedBy: address,
+          chainId: 84532, // Base Sepolia
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to release funds");
+      }
+
+      const data = await response.json();
+      console.log("Funds released:", data);
+      
       await loadEscrow();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to release escrow");
