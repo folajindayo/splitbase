@@ -47,6 +47,44 @@ export default function EscrowDetailsPage() {
     }
   }, [escrowId]);
 
+  // Auto-check for funding every 10 seconds if status is pending
+  useEffect(() => {
+    if (!escrow || escrow.status !== 'pending' || !escrow.custody_wallet_address) {
+      return;
+    }
+
+    const autoCheckFunding = async () => {
+      try {
+        const response = await fetch("/api/escrow/auto-fund-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            escrowId: escrow.id,
+            chainId: 84532, // Base Sepolia
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.funded || data.autoMarked) {
+            // Escrow was funded, reload the page
+            await loadEscrow();
+          }
+        }
+      } catch (err) {
+        console.error("Error auto-checking funding:", err);
+      }
+    };
+
+    // Check immediately
+    autoCheckFunding();
+
+    // Then check every 10 seconds
+    const interval = setInterval(autoCheckFunding, 10000);
+
+    return () => clearInterval(interval);
+  }, [escrow?.id, escrow?.status, escrow?.custody_wallet_address]);
+
   const loadEscrow = async () => {
     setLoading(true);
     try {
