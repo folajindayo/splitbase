@@ -20,7 +20,7 @@ SplitBase allows creators, teams, and DAOs to receive payments into a single wal
 - **📊 Export to CSV**: Export split data and transaction history to CSV files
 - **🏷️ ENS/Basename Support**: Use ENS names (e.g., vitalik.eth) or Basenames instead of addresses
 - **📧 Email Notifications**: Get notified via email when distributions occur (optional)
-- **🔒 Escrow System**: Secure payment escrow with buyer-seller protection, time locks, and milestone-based releases (no smart contracts required)
+- **🔒 Custodial Escrow System**: Platform holds funds securely as trusted intermediary - automatic funding detection, secure key encryption, no smart contracts required
 
 ## 📁 Project Structure
 
@@ -151,10 +151,6 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_DEFAULT_CHAIN_ID=84532
 
-# Custodial Escrow - Required for Escrow System
-NEXT_PUBLIC_CUSTODIAL_WALLET_ADDRESS=your_custodial_wallet_address
-NEXT_PUBLIC_RPC_URL=https://mainnet.base.org
-
 # Optional - Email Notifications
 RESEND_API_KEY=your_resend_api_key
 RESEND_FROM_EMAIL="SplitBase <notifications@yourdomain.com>"
@@ -229,9 +225,20 @@ When enabled, you'll receive emails for:
 
 If needed, you can manually trigger distribution by clicking "Distribute Now" on the split details page.
 
-## 🔒 Escrow System
+## 🔒 Custodial Escrow System
 
-SplitBase includes a comprehensive escrow system for secure payment transactions between buyers and sellers.
+SplitBase includes a **custodial escrow system** where the platform acts as a trusted intermediary, securely holding funds until release conditions are met. This provides security without smart contract complexity.
+
+### How Custody Works
+
+When you create an escrow:
+1. **Unique Wallet Generated**: Each escrow gets its own secure wallet
+2. **Encrypted Storage**: Private keys are encrypted and stored securely
+3. **Automatic Detection**: System detects when funds are deposited
+4. **Controlled Release**: Only the buyer can release funds to seller
+5. **No User Keys**: Your private key is never needed or exposed
+
+See [CUSTODY_SYSTEM.md](./CUSTODY_SYSTEM.md) for detailed security documentation.
 
 ### Creating an Escrow
 
@@ -250,6 +257,7 @@ SplitBase includes a comprehensive escrow system for secure payment transactions
    - For milestone: Define milestones with titles, descriptions, and percentage splits
 6. **Step 4: Review & Create**
    - Review all details and create the escrow agreement
+   - System generates secure custody wallet automatically
 
 ### Escrow Types
 
@@ -274,15 +282,25 @@ SplitBase includes a comprehensive escrow system for secure payment transactions
 ### Using Escrow as a Buyer
 
 1. **Create Escrow**: Set up the agreement with seller details
-2. **Deposit Funds**: Send the agreed amount to the seller's address
-3. **Mark as Funded**: Provide the transaction hash to confirm deposit
-4. **Wait for Delivery**: Seller completes the work/delivers goods
-5. **Release Funds**: Approve release when satisfied with delivery
+2. **Receive Custody Wallet**: Get a unique deposit address with QR code
+3. **Deposit Funds**: Send the agreed amount to the custody wallet address
+4. **Automatic Confirmation**: System detects and confirms your deposit automatically
+5. **Wait for Delivery**: Seller completes the work/delivers goods
+6. **Release Funds**: Approve release when satisfied with delivery
+   - Funds are sent automatically from custody wallet to seller
+   - Gas fees calculated and deducted automatically
 
 For milestone escrows:
 - Review each completed milestone
 - Release payment stage by stage
 - Track progress with visual milestone tracker
+
+**Benefits of Custody:**
+- ✅ No transaction hash needed - automatic detection
+- ✅ Real-time balance monitoring with QR code
+- ✅ Secure encryption of wallet keys
+- ✅ Platform handles gas optimization
+- ✅ Simple one-click release
 
 ### Using Escrow as a Seller
 
@@ -304,21 +322,18 @@ The escrow dashboard provides:
 
 ### Escrow Security
 
-- **🔒 Secure Custody**: SplitBase holds funds in a secure custodial wallet as the trust layer
-- **Blockchain Verification**: All deposits are verified on-chain before marking as funded
-- **Buyer Control**: Only the buyer can approve fund release
-- **Database Tracking**: Escrow agreements and milestones stored in database
+- **No Custody**: Funds are sent directly to seller's address (we only track agreements)
+- **Database Tracking**: Escrow logic stored in database, not blockchain
 - **Activity Logging**: All actions recorded with timestamps and actor addresses
 - **Email Notifications**: Optional alerts for key events (funded, released, milestones)
 - **Transparent**: All parties can view escrow status and activity log
 
 ### Important Notes
 
-- **SplitBase acts as the trust layer** - funds are held in a secure custodial wallet
-- Deposits are verified on the blockchain before marking as funded
-- Buyers retain full control - only they can approve fund release
-- Both parties should agree to use SplitBase escrow before creating an agreement
-- The system is designed for secure transactions with clear deliverables and milestones
+- This escrow system **does not hold funds** - it tracks agreements only
+- Funds are sent directly to the seller's address
+- Both parties should agree to use SplitBase for tracking before creating an escrow
+- The system is designed for trust-minimized transactions with clear deliverables
 
 ## 🧪 Testing
 
