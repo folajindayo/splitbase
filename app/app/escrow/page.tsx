@@ -7,6 +7,7 @@ import { getUserEscrows, getEscrowStats, EscrowWithMilestones } from "@/lib/escr
 import CreateEscrowModal from "@/components/CreateEscrowModal";
 import EscrowCard from "@/components/EscrowCard";
 import EscrowQuickStats from "@/components/EscrowQuickStats";
+import CustodyBalanceWidget from "@/components/CustodyBalanceWidget";
 import { exportAllEscrowsToCSV } from "@/lib/escrowExport";
 
 export default function EscrowPage() {
@@ -145,9 +146,16 @@ export default function EscrowPage() {
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats and Custody Balance */}
         {escrows.length > 0 && (
-          <EscrowQuickStats escrows={escrows} userAddress={address} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <EscrowQuickStats escrows={escrows} userAddress={address} />
+            </div>
+            <div>
+              <CustodyBalanceWidget />
+            </div>
+          </div>
         )}
 
         {/* Stats */}
