@@ -163,7 +163,7 @@ export default function EscrowDetailsPage() {
   const handleCancel = async () => {
     if (!escrow || !address) return;
 
-    if (!confirm("Are you sure you want to cancel this escrow?")) {
+    if (!confirm("Are you sure you want to cancel this escrow? If funded, your funds will be automatically refunded.")) {
       return;
     }
 
@@ -171,7 +171,30 @@ export default function EscrowDetailsPage() {
     setError("");
 
     try {
-      await cancelEscrow(escrow.id, address);
+      // If escrow is funded, call refund API to return funds from custody
+      if (escrow.status === "funded" && escrow.custody_wallet_address) {
+        const response = await fetch("/api/escrow/refund-funds", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            escrowId: escrow.id,
+            cancelledBy: address,
+            chainId: 84532, // Base Sepolia
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to refund funds");
+        }
+
+        const data = await response.json();
+        console.log("Funds refunded:", data);
+      } else {
+        // If not funded, just cancel normally
+        await cancelEscrow(escrow.id, address);
+      }
+      
       await loadEscrow();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to cancel escrow");
