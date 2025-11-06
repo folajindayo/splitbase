@@ -18,7 +18,7 @@ import { exportEscrowToCSV } from "@/lib/escrowExport";
 import DisputeModal from "@/components/DisputeModal";
 import ShareEscrowModal from "@/components/ShareEscrowModal";
 import EscrowNotes from "@/components/EscrowNotes";
-import FundingInstructions from "@/components/FundingInstructions";
+import CustodyWalletDisplay from "@/components/CustodyWalletDisplay";
 import { openDispute } from "@/lib/escrow";
 
 export default function EscrowDetailsPage() {
@@ -31,6 +31,7 @@ export default function EscrowDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+  const [txHash, setTxHash] = useState("");
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -63,7 +64,7 @@ export default function EscrowDetailsPage() {
     }
   };
 
-  const handleMarkAsFunded = async (txHash: string) => {
+  const handleMarkAsFunded = async () => {
     if (!escrow || !address || !txHash) {
       setError("Please provide a transaction hash");
       return;
@@ -75,8 +76,9 @@ export default function EscrowDetailsPage() {
     try {
       await markEscrowAsFunded(escrow.id, txHash, address);
       await loadEscrow();
+      setTxHash("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to verify and mark as funded");
+      setError(err instanceof Error ? err.message : "Failed to mark as funded");
     } finally {
       setActionLoading(false);
     }
@@ -85,11 +87,7 @@ export default function EscrowDetailsPage() {
   const handleRelease = async () => {
     if (!escrow || !address) return;
 
-    if (!confirm(
-      `Are you sure you want to release ${escrow.total_amount} ${escrow.currency} to the seller?\n\n` +
-      `This will send the funds from our custodial wallet to:\n${escrow.seller_address}\n\n` +
-      `This action cannot be undone.`
-    )) {
+    if (!confirm("Are you sure you want to release the escrow funds to the seller?")) {
       return;
     }
 
@@ -97,34 +95,10 @@ export default function EscrowDetailsPage() {
     setError("");
 
     try {
-      // Call API to release funds from custodial wallet
-      const response = await fetch('/api/escrow/release', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          escrowId: escrow.id,
-          actorAddress: address,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to release funds');
-      }
-
-      console.log('Funds released successfully:', data.txHash);
-      
-      // Reload escrow to show updated status
+      await releaseEscrow(escrow.id, address);
       await loadEscrow();
-      
-      alert(`Funds released successfully!\nTransaction: ${data.txHash}`);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to release escrow";
-      setError(errorMessage);
-      alert(`Error: ${errorMessage}`);
+      setError(err instanceof Error ? err.message : "Failed to release escrow");
     } finally {
       setActionLoading(false);
     }
@@ -334,17 +308,14 @@ export default function EscrowDetailsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <h3 className="text-lg font-semibold mb-4">Actions</h3>
 
-          {/* Pending - Buyer can fund escrow */}
-          {escrow.status === 'pending' && userIsBuyer && (
+          {/* Pending - Buyer can deposit funds */}
+          {escrow.status === 'pending' && userIsBuyer && escrow.custody_wallet_address && (
             <div className="space-y-4">
-              <FundingInstructions
-                escrowId={escrow.id}
-                escrowTitle={escrow.title}
-                amount={parseFloat(escrow.total_amount.toString())}
+              <CustodyWalletDisplay
+                walletAddress={escrow.custody_wallet_address}
+                expectedAmount={escrow.total_amount.toString()}
                 currency={escrow.currency}
-                depositAddress={escrow.deposit_address || ""}
-                onFunded={handleMarkAsFunded}
-                loading={actionLoading}
+                escrowTitle={escrow.title}
               />
               <div className="flex gap-3">
                 <button
