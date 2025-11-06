@@ -57,6 +57,15 @@ export default function CustodyWalletDisplay({
       if (response.ok) {
         const data = await response.json();
         setBalance(data.balanceInEth);
+        
+        // If balance is sufficient, trigger auto-fund check
+        const currentBalance = parseFloat(data.balanceInEth);
+        const expected = parseFloat(expectedAmount);
+        
+        if (currentBalance >= expected) {
+          // Balance is sufficient - page will reload via auto-check
+          console.log("Balance sufficient, escrow will be auto-funded");
+        }
       }
     } catch (err) {
       console.error("Error checking balance:", err);
