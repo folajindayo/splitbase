@@ -1,0 +1,85 @@
+MIT License
+
+Copyright (c) 2025 SplitBase
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+IMPORTANT NOTICES:
+
+1. CUSTODIAL ESCROW DISCLAIMER:
+   This software includes a custodial escrow system that generates and manages
+   cryptographic keys. The operators of this software have a fiduciary duty to
+   protect user funds. Use at your own risk.
+
+2. SECURITY:
+   While this software implements industry-standard security practices including
+   AES-256-CBC encryption, no system is completely secure. Users and operators
+   should:
+   - Perform thorough security audits before production use
+   - Implement additional security measures as needed
+   - Maintain proper insurance coverage
+   - Follow all applicable regulations
+
+3. REGULATORY COMPLIANCE:
+   Custodial escrow services may be subject to financial regulations in your
+   jurisdiction. Users and operators are solely responsible for ensuring
+   compliance with all applicable laws, including but not limited to:
+   - Money Service Business (MSB) requirements
+   - Know Your Customer (KYC) regulations
+   - Anti-Money Laundering (AML) requirements
+   - Securities laws
+   - Consumer protection laws
+
+4. NO WARRANTY:
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. The authors
+   and copyright holders shall not be liable for any damages, including loss
+   of funds, arising from the use of this software.
+
+5. ENCRYPTION KEY MANAGEMENT:
+   The security of the custodial system depends entirely on proper encryption
+   key management. Users and operators are responsible for:
+   - Generating secure encryption keys
+   - Storing keys in secure secret management systems
+   - Implementing proper key rotation procedures
+   - Maintaining backup and recovery procedures
+
+6. AUDIT RECOMMENDATION:
+   Before deploying this software in a production environment with real funds,
+   it is strongly recommended to:
+   - Conduct a third-party security audit
+   - Perform penetration testing
+   - Review all code and configuration
+   - Test extensively on testnets
+   - Implement comprehensive monitoring
+
+7. UPDATES AND MAINTENANCE:
+   Users and operators are responsible for:
+   - Keeping dependencies up to date
+   - Monitoring security advisories
+   - Applying patches promptly
+   - Maintaining secure infrastructure
+
+By using this software, you acknowledge that you have read and understood
+these notices and accept all associated risks.
+
+For questions about licensing or commercial use, please contact:
+[Your Contact Information]
+
