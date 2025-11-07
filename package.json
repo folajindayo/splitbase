@@ -1,0 +1,49 @@
+{
+  "name": "splitbase",
+  "version": "2.0.0",
+  "description": "Enterprise Custodial Escrow Platform for Web3",
+  "private": true,
+  "scripts": {
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build",
+    "start": "cd app && npm start",
+    "lint": "cd app && npm run lint",
+    "type-check": "cd app && npx tsc --noEmit",
+    "setup": "./scripts/setup-custody.sh",
+    "validate": "node scripts/validate-migrations.js",
+    "health-check": "./scripts/health-check.sh",
+    "docker:build": "docker build -t splitbase:latest .",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "test": "cd app && npm test",
+    "postinstall": "cd app && npm install"
+  },
+  "keywords": [
+    "web3",
+    "escrow",
+    "custody",
+    "ethereum",
+    "base",
+    "blockchain",
+    "payment",
+    "crypto",
+    "nextjs",
+    "typescript"
+  ],
+  "author": "SplitBase Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/folajindayo/splitbase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/folajindayo/splitbase/issues"
+  },
+  "homepage": "https://github.com/folajindayo/splitbase#readme",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
+
