@@ -1,447 +1,724 @@
-/**
- * Validation Utilities
- * Form validation and data validation helpers
- */
+import { createClient } from '@supabase/supabase-js';
 
-/**
- * Validate Ethereum address
- */
-export function isValidAddress(address: string): boolean {
-  if (!address) return false;
-  return /^0x[a-fA-F0-9]{40}$/.test(address);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
+
+export enum ValidationType {
+  STRING = 'string',
+  NUMBER = 'number',
+  BOOLEAN = 'boolean',
+  EMAIL = 'email',
+  URL = 'url',
+  DATE = 'date',
+  PHONE = 'phone',
+  CREDIT_CARD = 'credit_card',
+  PASSWORD = 'password',
+  UUID = 'uuid',
+  ARRAY = 'array',
+  OBJECT = 'object',
+  ENUM = 'enum',
+  CUSTOM = 'custom',
 }
 
-/**
- * Validate ENS/Basename domain
- */
-export function isValidDomain(domain: string): boolean {
-  if (!domain) return false;
-  return /^[a-zA-Z0-9-]+\.(eth|base\.eth)$/.test(domain);
+export interface ValidationRule {
+  type: ValidationType;
+  required?: boolean;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: RegExp;
+  enum?: any[];
+  custom?: (value: any) => boolean | string;
+  message?: string;
+  items?: ValidationRule; // For arrays
+  properties?: Record<string, ValidationRule>; // For objects
 }
 
-/**
- * Validate email
- */
-export function isValidEmail(email: string): boolean {
-  if (!email) return false;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-/**
- * Validate URL
- */
-export function isValidUrl(url: string): boolean {
-  if (!url) return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Validate amount (positive number with decimals)
- */
-export function isValidAmount(amount: string | number): {
+export interface ValidationResult {
   valid: boolean;
-  error?: string;
-} {
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
-
-  if (isNaN(num)) {
-    return { valid: false, error: "Amount must be a valid number" };
-  }
-
-  if (num <= 0) {
-    return { valid: false, error: "Amount must be greater than 0" };
-  }
-
-  if (num > 1000000) {
-    return { valid: false, error: "Amount is too large" };
-  }
-
-  return { valid: true };
+  errors: ValidationError[];
+  warnings?: ValidationWarning[];
+  sanitized?: any;
 }
 
-/**
- * Validate percentage (0-100)
- */
-export function isValidPercentage(percentage: number): {
-  valid: boolean;
-  error?: string;
-} {
-  if (isNaN(percentage)) {
-    return { valid: false, error: "Percentage must be a number" };
-  }
-
-  if (percentage < 0 || percentage > 100) {
-    return { valid: false, error: "Percentage must be between 0 and 100" };
-  }
-
-  return { valid: true };
+export interface ValidationError {
+  field: string;
+  message: string;
+  type: string;
+  value?: any;
 }
 
-/**
- * Validate date (not in the past)
- */
-export function isValidFutureDate(date: string | Date): {
-  valid: boolean;
-  error?: string;
-} {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-
-  if (isNaN(dateObj.getTime())) {
-    return { valid: false, error: "Invalid date format" };
-  }
-
-  if (dateObj < new Date()) {
-    return { valid: false, error: "Date must be in the future" };
-  }
-
-  return { valid: true };
+export interface ValidationWarning {
+  field: string;
+  message: string;
+  suggestion?: string;
 }
 
-/**
- * Validate text length
- */
-export function isValidLength(
-  text: string,
-  min: number,
-  max: number
-): {
-  valid: boolean;
-  error?: string;
-} {
-  if (!text) {
-    return { valid: false, error: "Text is required" };
-  }
-
-  if (text.length < min) {
-    return { valid: false, error: `Text must be at least ${min} characters` };
-  }
-
-  if (text.length > max) {
-    return { valid: false, error: `Text must be no more than ${max} characters` };
-  }
-
-  return { valid: true };
+export interface SanitizationOptions {
+  trim?: boolean;
+  lowercase?: boolean;
+  uppercase?: boolean;
+  escape?: boolean;
+  stripHtml?: boolean;
+  removeWhitespace?: boolean;
 }
 
-/**
- * Validate escrow creation data
- */
-export function validateEscrowData(data: {
-  title: string;
-  buyer_address: string;
-  seller_address: string;
-  total_amount: number;
-  escrow_type: string;
-  release_date?: string;
-}): {
-  valid: boolean;
-  errors: Record<string, string>;
-} {
-  const errors: Record<string, string> = {};
+class ValidationSystem {
+  private static instance: ValidationSystem;
 
-  // Title
-  const titleValidation = isValidLength(data.title, 3, 100);
-  if (!titleValidation.valid) {
-    errors.title = titleValidation.error!;
-  }
+  // Regex patterns
+  private readonly patterns = {
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    url: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+    phone: /^\+?[\d\s\-\(\)]{10,}$/,
+    creditCard: /^\d{13,19}$/,
+    uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    alphanumeric: /^[a-zA-Z0-9]+$/,
+    alpha: /^[a-zA-Z]+$/,
+    numeric: /^\d+$/,
+  };
 
-  // Buyer address
-  if (!isValidAddress(data.buyer_address)) {
-    errors.buyer_address = "Invalid buyer address";
-  }
+  private constructor() {}
 
-  // Seller address
-  if (!isValidAddress(data.seller_address)) {
-    errors.seller_address = "Invalid seller address";
-  }
-
-  // Check addresses are different
-  if (
-    data.buyer_address.toLowerCase() === data.seller_address.toLowerCase()
-  ) {
-    errors.seller_address = "Buyer and seller addresses must be different";
-  }
-
-  // Amount
-  const amountValidation = isValidAmount(data.total_amount);
-  if (!amountValidation.valid) {
-    errors.total_amount = amountValidation.error!;
-  }
-
-  // Release date (for time-locked escrows)
-  if (data.escrow_type === "time_locked" && data.release_date) {
-    const dateValidation = isValidFutureDate(data.release_date);
-    if (!dateValidation.valid) {
-      errors.release_date = dateValidation.error!;
+  static getInstance(): ValidationSystem {
+    if (!ValidationSystem.instance) {
+      ValidationSystem.instance = new ValidationSystem();
     }
+    return ValidationSystem.instance;
   }
 
-  return {
-    valid: Object.keys(errors).length === 0,
-    errors,
-  };
-}
+  // Validate data
+  validate(
+    data: Record<string, any>,
+    schema: Record<string, ValidationRule>
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
+    const sanitized: Record<string, any> = {};
 
-/**
- * Validate milestone data
- */
-export function validateMilestones(
-  milestones: Array<{ title: string; percentage: number }>
-): {
-  valid: boolean;
-  errors: string[];
-} {
-  const errors: string[] = [];
+    for (const [field, rule] of Object.entries(schema)) {
+      const value = data[field];
 
-  if (milestones.length < 2) {
-    errors.push("At least 2 milestones are required");
-  }
-
-  if (milestones.length > 10) {
-    errors.push("Maximum 10 milestones allowed");
-  }
-
-  // Check each milestone
-  milestones.forEach((milestone, index) => {
-    const titleValidation = isValidLength(milestone.title, 3, 50);
-    if (!titleValidation.valid) {
-      errors.push(`Milestone ${index + 1}: ${titleValidation.error}`);
-    }
-
-    const percentageValidation = isValidPercentage(milestone.percentage);
-    if (!percentageValidation.valid) {
-      errors.push(`Milestone ${index + 1}: ${percentageValidation.error}`);
-    }
-  });
-
-  // Check total percentage
-  const totalPercentage = milestones.reduce(
-    (sum, m) => sum + m.percentage,
-    0
-  );
-  if (Math.abs(totalPercentage - 100) > 0.01) {
-    errors.push(`Total percentage must equal 100% (currently ${totalPercentage}%)`);
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-}
-
-/**
- * Sanitize user input (prevent XSS)
- */
-export function sanitizeInput(input: string): string {
-  if (!input) return "";
-
-  return input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;");
-}
-
-/**
- * Validate and sanitize text input
- */
-export function validateAndSanitizeText(
-  text: string,
-  minLength: number = 1,
-  maxLength: number = 500
-): {
-  valid: boolean;
-  sanitized: string;
-  error?: string;
-} {
-  const lengthValidation = isValidLength(text, minLength, maxLength);
-  
-  if (!lengthValidation.valid) {
-    return {
-      valid: false,
-      sanitized: "",
-      error: lengthValidation.error,
-    };
-  }
-
-  return {
-    valid: true,
-    sanitized: sanitizeInput(text),
-  };
-}
-
-/**
- * Validate password strength
- */
-export function validatePasswordStrength(password: string): {
-  valid: boolean;
-  strength: "weak" | "medium" | "strong";
-  errors: string[];
-} {
-  const errors: string[] = [];
-  let score = 0;
-
-  if (password.length < 8) {
-    errors.push("Password must be at least 8 characters");
-  } else {
-    score++;
-  }
-
-  if (!/[a-z]/.test(password)) {
-    errors.push("Password must contain lowercase letters");
-  } else {
-    score++;
-  }
-
-  if (!/[A-Z]/.test(password)) {
-    errors.push("Password must contain uppercase letters");
-  } else {
-    score++;
-  }
-
-  if (!/[0-9]/.test(password)) {
-    errors.push("Password must contain numbers");
-  } else {
-    score++;
-  }
-
-  if (!/[^a-zA-Z0-9]/.test(password)) {
-    errors.push("Password must contain special characters");
-  } else {
-    score++;
-  }
-
-  let strength: "weak" | "medium" | "strong" = "weak";
-  if (score >= 4) strength = "strong";
-  else if (score >= 3) strength = "medium";
-
-  return {
-    valid: errors.length === 0,
-    strength,
-    errors,
-  };
-}
-
-/**
- * Validate phone number (basic)
- */
-export function isValidPhoneNumber(phone: string): boolean {
-  if (!phone) return false;
-  const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-  return phoneRegex.test(phone) && phone.replace(/\D/g, "").length >= 10;
-}
-
-/**
- * Validate transaction hash
- */
-export function isValidTransactionHash(hash: string): boolean {
-  if (!hash) return false;
-  return /^0x[a-fA-F0-9]{64}$/.test(hash);
-}
-
-/**
- * Validate private key (without exposing it)
- */
-export function isValidPrivateKey(key: string): boolean {
-  if (!key) return false;
-  // Remove 0x prefix if present
-  const cleanKey = key.startsWith("0x") ? key.slice(2) : key;
-  return cleanKey.length === 64 && /^[a-fA-F0-9]+$/.test(cleanKey);
-}
-
-/**
- * Validate JSON string
- */
-export function isValidJSON(str: string): boolean {
-  try {
-    JSON.parse(str);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Validate array has no duplicates
- */
-export function hasNoDuplicates<T>(arr: T[]): {
-  valid: boolean;
-  duplicates: T[];
-} {
-  const seen = new Set<T>();
-  const duplicates: T[] = [];
-
-  for (const item of arr) {
-    if (seen.has(item)) {
-      if (!duplicates.includes(item)) {
-        duplicates.push(item);
+      // Check required
+      if (rule.required && (value === undefined || value === null || value === '')) {
+        errors.push({
+          field,
+          message: rule.message || `${field} is required`,
+          type: 'required',
+        });
+        continue;
       }
-    } else {
-      seen.add(item);
+
+      // Skip validation if not required and empty
+      if (!rule.required && (value === undefined || value === null || value === '')) {
+        continue;
+      }
+
+      // Validate by type
+      const typeValidation = this.validateType(field, value, rule);
+      if (!typeValidation.valid) {
+        errors.push(...typeValidation.errors);
+      } else {
+        sanitized[field] = typeValidation.sanitized ?? value;
+      }
+
+      if (typeValidation.warnings) {
+        warnings.push(...typeValidation.warnings);
+      }
     }
-  }
 
-  return {
-    valid: duplicates.length === 0,
-    duplicates,
-  };
-}
-
-/**
- * Validate file upload
- */
-export function validateFile(
-  file: File,
-  options: {
-    maxSize?: number; // in bytes
-    allowedTypes?: string[];
-    allowedExtensions?: string[];
-  } = {}
-): {
-  valid: boolean;
-  error?: string;
-} {
-  const {
-    maxSize = 5 * 1024 * 1024, // 5MB default
-    allowedTypes = [],
-    allowedExtensions = [],
-  } = options;
-
-  // Check size
-  if (file.size > maxSize) {
     return {
-      valid: false,
-      error: `File size must be less than ${maxSize / (1024 * 1024)}MB`,
+      valid: errors.length === 0,
+      errors,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      sanitized,
     };
   }
 
-  // Check type
-  if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+  // Validate type
+  private validateType(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
+    let sanitized = value;
+
+    switch (rule.type) {
+      case ValidationType.STRING:
+        const stringResult = this.validateString(field, value, rule);
+        if (!stringResult.valid) errors.push(...stringResult.errors);
+        sanitized = stringResult.sanitized;
+        break;
+
+      case ValidationType.NUMBER:
+        const numberResult = this.validateNumber(field, value, rule);
+        if (!numberResult.valid) errors.push(...numberResult.errors);
+        sanitized = numberResult.sanitized;
+        break;
+
+      case ValidationType.BOOLEAN:
+        if (typeof value !== 'boolean') {
+          errors.push({
+            field,
+            message: rule.message || `${field} must be a boolean`,
+            type: 'type',
+            value,
+          });
+        }
+        break;
+
+      case ValidationType.EMAIL:
+        const emailResult = this.validateEmail(field, value, rule);
+        if (!emailResult.valid) errors.push(...emailResult.errors);
+        sanitized = emailResult.sanitized;
+        break;
+
+      case ValidationType.URL:
+        if (!this.patterns.url.test(value)) {
+          errors.push({
+            field,
+            message: rule.message || `${field} must be a valid URL`,
+            type: 'format',
+            value,
+          });
+        }
+        break;
+
+      case ValidationType.DATE:
+        const dateResult = this.validateDate(field, value, rule);
+        if (!dateResult.valid) errors.push(...dateResult.errors);
+        sanitized = dateResult.sanitized;
+        break;
+
+      case ValidationType.PHONE:
+        if (!this.patterns.phone.test(value)) {
+          errors.push({
+            field,
+            message: rule.message || `${field} must be a valid phone number`,
+            type: 'format',
+            value,
+          });
+        }
+        sanitized = this.sanitizePhone(value);
+        break;
+
+      case ValidationType.CREDIT_CARD:
+        const ccResult = this.validateCreditCard(field, value, rule);
+        if (!ccResult.valid) errors.push(...ccResult.errors);
+        break;
+
+      case ValidationType.PASSWORD:
+        const pwdResult = this.validatePassword(field, value, rule);
+        if (!pwdResult.valid) errors.push(...pwdResult.errors);
+        if (pwdResult.warnings) warnings.push(...pwdResult.warnings);
+        break;
+
+      case ValidationType.UUID:
+        if (!this.patterns.uuid.test(value)) {
+          errors.push({
+            field,
+            message: rule.message || `${field} must be a valid UUID`,
+            type: 'format',
+            value,
+          });
+        }
+        break;
+
+      case ValidationType.ARRAY:
+        const arrayResult = this.validateArray(field, value, rule);
+        if (!arrayResult.valid) errors.push(...arrayResult.errors);
+        sanitized = arrayResult.sanitized;
+        break;
+
+      case ValidationType.OBJECT:
+        const objectResult = this.validateObject(field, value, rule);
+        if (!objectResult.valid) errors.push(...objectResult.errors);
+        sanitized = objectResult.sanitized;
+        break;
+
+      case ValidationType.ENUM:
+        if (rule.enum && !rule.enum.includes(value)) {
+          errors.push({
+            field,
+            message:
+              rule.message || `${field} must be one of: ${rule.enum.join(', ')}`,
+            type: 'enum',
+            value,
+          });
+        }
+        break;
+
+      case ValidationType.CUSTOM:
+        if (rule.custom) {
+          const result = rule.custom(value);
+          if (result !== true) {
+            errors.push({
+              field,
+              message: typeof result === 'string' ? result : rule.message || `${field} validation failed`,
+              type: 'custom',
+              value,
+            });
+          }
+        }
+        break;
+    }
+
+    // Pattern validation
+    if (rule.pattern && !rule.pattern.test(String(value))) {
+      errors.push({
+        field,
+        message: rule.message || `${field} format is invalid`,
+        type: 'pattern',
+        value,
+      });
+    }
+
     return {
-      valid: false,
-      error: `File type ${file.type} is not allowed`,
+      valid: errors.length === 0,
+      errors,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      sanitized,
     };
   }
 
-  // Check extension
-  if (allowedExtensions.length > 0) {
-    const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!extension || !allowedExtensions.includes(extension)) {
-      return {
-        valid: false,
-        error: `File extension .${extension} is not allowed`,
-      };
+  // Validate string
+  private validateString(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+
+    if (typeof value !== 'string') {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be a string`,
+        type: 'type',
+        value,
+      });
+      return { valid: false, errors };
     }
+
+    const sanitized = value.trim();
+
+    if (rule.minLength && sanitized.length < rule.minLength) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be at least ${rule.minLength} characters`,
+        type: 'minLength',
+        value,
+      });
+    }
+
+    if (rule.maxLength && sanitized.length > rule.maxLength) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be at most ${rule.maxLength} characters`,
+        type: 'maxLength',
+        value,
+      });
+    }
+
+    return { valid: errors.length === 0, errors, sanitized };
   }
 
-  return { valid: true };
+  // Validate number
+  private validateNumber(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+
+    if (typeof num !== 'number' || isNaN(num)) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be a number`,
+        type: 'type',
+        value,
+      });
+      return { valid: false, errors };
+    }
+
+    if (rule.min !== undefined && num < rule.min) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be at least ${rule.min}`,
+        type: 'min',
+        value,
+      });
+    }
+
+    if (rule.max !== undefined && num > rule.max) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be at most ${rule.max}`,
+        type: 'max',
+        value,
+      });
+    }
+
+    return { valid: errors.length === 0, errors, sanitized: num };
+  }
+
+  // Validate email
+  private validateEmail(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+
+    if (!this.patterns.email.test(value)) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be a valid email`,
+        type: 'format',
+        value,
+      });
+    }
+
+    const sanitized = value.toLowerCase().trim();
+
+    return { valid: errors.length === 0, errors, sanitized };
+  }
+
+  // Validate date
+  private validateDate(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+
+    const date = new Date(value);
+
+    if (isNaN(date.getTime())) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be a valid date`,
+        type: 'format',
+        value,
+      });
+      return { valid: false, errors };
+    }
+
+    const sanitized = date.toISOString();
+
+    return { valid: true, errors, sanitized };
+  }
+
+  // Validate credit card
+  private validateCreditCard(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+
+    const sanitized = String(value).replace(/\s|-/g, '');
+
+    if (!this.patterns.creditCard.test(sanitized)) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be a valid credit card number`,
+        type: 'format',
+        value,
+      });
+      return { valid: false, errors };
+    }
+
+    // Luhn algorithm
+    if (!this.luhnCheck(sanitized)) {
+      errors.push({
+        field,
+        message: rule.message || `${field} credit card number is invalid`,
+        type: 'checksum',
+        value,
+      });
+    }
+
+    return { valid: errors.length === 0, errors };
+  }
+
+  // Validate password
+  private validatePassword(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
+
+    if (typeof value !== 'string') {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be a string`,
+        type: 'type',
+        value,
+      });
+      return { valid: false, errors };
+    }
+
+    const minLength = rule.minLength || 8;
+
+    if (value.length < minLength) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be at least ${minLength} characters`,
+        type: 'minLength',
+        value,
+      });
+    }
+
+    // Password strength checks
+    const hasLowercase = /[a-z]/.test(value);
+    const hasUppercase = /[A-Z]/.test(value);
+    const hasNumber = /\d/.test(value);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+
+    if (!hasLowercase || !hasUppercase || !hasNumber || !hasSpecial) {
+      warnings.push({
+        field,
+        message: 'Password should contain uppercase, lowercase, number, and special characters',
+        suggestion: 'Use a mix of character types for better security',
+      });
+    }
+
+    // Common passwords check
+    const commonPasswords = ['password', '123456', 'qwerty', 'admin'];
+    if (commonPasswords.includes(value.toLowerCase())) {
+      errors.push({
+        field,
+        message: rule.message || `${field} is too common`,
+        type: 'weak',
+        value,
+      });
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    };
+  }
+
+  // Validate array
+  private validateArray(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+
+    if (!Array.isArray(value)) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be an array`,
+        type: 'type',
+        value,
+      });
+      return { valid: false, errors };
+    }
+
+    if (rule.minLength !== undefined && value.length < rule.minLength) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must have at least ${rule.minLength} items`,
+        type: 'minLength',
+        value,
+      });
+    }
+
+    if (rule.maxLength !== undefined && value.length > rule.maxLength) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must have at most ${rule.maxLength} items`,
+        type: 'maxLength',
+        value,
+      });
+    }
+
+    // Validate items
+    const sanitized: any[] = [];
+    if (rule.items) {
+      value.forEach((item, index) => {
+        const itemResult = this.validateType(`${field}[${index}]`, item, rule.items!);
+        if (!itemResult.valid) {
+          errors.push(...itemResult.errors);
+        }
+        sanitized.push(itemResult.sanitized ?? item);
+      });
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      sanitized: rule.items ? sanitized : value,
+    };
+  }
+
+  // Validate object
+  private validateObject(
+    field: string,
+    value: any,
+    rule: ValidationRule
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      errors.push({
+        field,
+        message: rule.message || `${field} must be an object`,
+        type: 'type',
+        value,
+      });
+      return { valid: false, errors };
+    }
+
+    // Validate properties
+    const sanitized: Record<string, any> = {};
+    if (rule.properties) {
+      const propResult = this.validate(value, rule.properties);
+      if (!propResult.valid) {
+        propResult.errors.forEach((err) => {
+          errors.push({
+            ...err,
+            field: `${field}.${err.field}`,
+          });
+        });
+      }
+      Object.assign(sanitized, propResult.sanitized);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      sanitized: rule.properties ? sanitized : value,
+    };
+  }
+
+  // Sanitize data
+  sanitize(value: any, options: SanitizationOptions = {}): any {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    let sanitized = value;
+
+    if (options.trim) {
+      sanitized = sanitized.trim();
+    }
+
+    if (options.lowercase) {
+      sanitized = sanitized.toLowerCase();
+    }
+
+    if (options.uppercase) {
+      sanitized = sanitized.toUpperCase();
+    }
+
+    if (options.escape) {
+      sanitized = this.escapeHtml(sanitized);
+    }
+
+    if (options.stripHtml) {
+      sanitized = this.stripHtml(sanitized);
+    }
+
+    if (options.removeWhitespace) {
+      sanitized = sanitized.replace(/\s+/g, '');
+    }
+
+    return sanitized;
+  }
+
+  // Escape HTML
+  private escapeHtml(text: string): string {
+    const map: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;',
+    };
+
+    return text.replace(/[&<>"']/g, (char) => map[char]);
+  }
+
+  // Strip HTML
+  private stripHtml(text: string): string {
+    return text.replace(/<[^>]*>/g, '');
+  }
+
+  // Sanitize phone
+  private sanitizePhone(phone: string): string {
+    return phone.replace(/[^\d+]/g, '');
+  }
+
+  // Luhn check for credit cards
+  private luhnCheck(cardNumber: string): boolean {
+    let sum = 0;
+    let isEven = false;
+
+    for (let i = cardNumber.length - 1; i >= 0; i--) {
+      let digit = parseInt(cardNumber[i], 10);
+
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) {
+          digit -= 9;
+        }
+      }
+
+      sum += digit;
+      isEven = !isEven;
+    }
+
+    return sum % 10 === 0;
+  }
+
+  // Quick validators
+  isEmail(email: string): boolean {
+    return this.patterns.email.test(email);
+  }
+
+  isUrl(url: string): boolean {
+    return this.patterns.url.test(url);
+  }
+
+  isPhone(phone: string): boolean {
+    return this.patterns.phone.test(phone);
+  }
+
+  isUUID(uuid: string): boolean {
+    return this.patterns.uuid.test(uuid);
+  }
+
+  isAlphanumeric(text: string): boolean {
+    return this.patterns.alphanumeric.test(text);
+  }
 }
 
+// Export singleton instance
+export const validation = ValidationSystem.getInstance();
+
+// Convenience functions
+export const validate = (data: Record<string, any>, schema: Record<string, ValidationRule>) =>
+  validation.validate(data, schema);
+
+export const sanitize = (value: any, options?: SanitizationOptions) =>
+  validation.sanitize(value, options);
+
+export const isEmail = (email: string) => validation.isEmail(email);
+export const isUrl = (url: string) => validation.isUrl(url);
+export const isPhone = (phone: string) => validation.isPhone(phone);
+export const isUUID = (uuid: string) => validation.isUUID(uuid);
+export const isAlphanumeric = (text: string) => validation.isAlphanumeric(text);
