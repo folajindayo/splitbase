@@ -1,423 +1,728 @@
-/**
- * Error Tracking and Logging System for SplitBase
- * Centralized error handling, logging, and reporting
- */
+import { createClient } from '@supabase/supabase-js';
 
-import { supabase } from "./supabase";
-import { logCustodyAudit } from "./custodyAudit";
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
 
-export interface ErrorLog {
-  id?: string;
-  error_type: "api" | "custody" | "database" | "network" | "validation" | "unknown";
-  severity: "low" | "medium" | "high" | "critical";
+export enum ErrorSeverity {
+  DEBUG = 'debug',
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error',
+  FATAL = 'fatal',
+}
+
+export enum ErrorCategory {
+  VALIDATION = 'validation',
+  AUTHENTICATION = 'authentication',
+  AUTHORIZATION = 'authorization',
+  DATABASE = 'database',
+  NETWORK = 'network',
+  PAYMENT = 'payment',
+  BUSINESS_LOGIC = 'business_logic',
+  SYSTEM = 'system',
+  THIRD_PARTY = 'third_party',
+  UNKNOWN = 'unknown',
+}
+
+export interface ErrorContext {
+  userId?: string;
+  sessionId?: string;
+  requestId?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  url?: string;
+  method?: string;
+  statusCode?: number;
+  tags?: string[];
+  metadata?: Record<string, any>;
+}
+
+export interface ErrorReport {
+  id: string;
+  severity: ErrorSeverity;
+  category: ErrorCategory;
   message: string;
-  stack_trace?: string;
-  user_address?: string;
-  escrow_id?: string;
-  endpoint?: string;
-  metadata?: Record<string, unknown>;
-  timestamp?: string;
-  resolved?: boolean;
-  resolved_at?: string;
-  resolved_by?: string;
+  stack?: string;
+  code?: string;
+  timestamp: string;
+  context: ErrorContext;
+  fingerprint: string;
+  occurrences: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  resolved: boolean;
+  resolvedAt?: string;
+  resolvedBy?: string;
 }
 
-export interface ErrorSummary {
-  totalErrors: number;
-  byType: Record<string, number>;
-  bySeverity: Record<string, number>;
-  recentErrors: ErrorLog[];
-  unresolvedCount: number;
+export interface ErrorGroup {
+  fingerprint: string;
+  message: string;
+  category: ErrorCategory;
+  severity: ErrorSeverity;
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+  affectedUsers: number;
+  resolved: boolean;
+  samples: ErrorReport[];
 }
 
-/**
- * Log an error to the database
- */
-export async function logError(
-  error: Omit<ErrorLog, "id" | "timestamp" | "resolved">
-): Promise<string | null> {
-  try {
-    const { data, error: dbError } = await supabase
-      .from("error_logs")
-      .insert({
-        ...error,
-        resolved: false,
+export interface ErrorMetrics {
+  total: number;
+  bySeverity: Record<ErrorSeverity, number>;
+  byCategory: Record<ErrorCategory, number>;
+  errorRate: number;
+  affectedUsers: number;
+  topErrors: Array<{ fingerprint: string; count: number; message: string }>;
+  timeline: Array<{ hour: string; count: number }>;
+}
+
+export interface AlertRule {
+  id: string;
+  name: string;
+  condition: {
+    severity?: ErrorSeverity[];
+    category?: ErrorCategory[];
+    threshold?: number;
+    timeWindow?: number; // minutes
+  };
+  actions: {
+    notify?: string[]; // user IDs
+    webhook?: string;
+    email?: string[];
+  };
+  enabled: boolean;
+}
+
+class ErrorTrackingSystem {
+  private static instance: ErrorTrackingSystem;
+  private alertRules: AlertRule[] = [];
+
+  private constructor() {}
+
+  static getInstance(): ErrorTrackingSystem {
+    if (!ErrorTrackingSystem.instance) {
+      ErrorTrackingSystem.instance = new ErrorTrackingSystem();
+    }
+    return ErrorTrackingSystem.instance;
+  }
+
+  // Capture error
+  async capture(
+    error: Error,
+    severity: ErrorSeverity = ErrorSeverity.ERROR,
+    context: Partial<ErrorContext> = {}
+  ): Promise<ErrorReport> {
+    try {
+      const category = this.categorizeError(error);
+      const fingerprint = this.generateFingerprint(error, category);
+
+      // Check if error already exists
+      const existing = await this.findByFingerprint(fingerprint);
+
+      if (existing) {
+        // Update occurrence count
+        return this.updateOccurrence(existing.id);
+      }
+
+      // Create new error report
+      const report: Omit<ErrorReport, 'id'> = {
+        severity,
+        category,
+        message: error.message,
+        stack: error.stack,
+        code: (error as any).code,
         timestamp: new Date().toISOString(),
+        context: {
+          userId: context.userId,
+          sessionId: context.sessionId,
+          requestId: context.requestId,
+          ipAddress: context.ipAddress,
+          userAgent: context.userAgent,
+          url: context.url,
+          method: context.method,
+          statusCode: context.statusCode,
+          tags: context.tags,
+          metadata: context.metadata,
+        },
+        fingerprint,
+        occurrences: 1,
+        firstSeenAt: new Date().toISOString(),
+        lastSeenAt: new Date().toISOString(),
+        resolved: false,
+      };
+
+      const { data, error: dbError } = await supabase
+        .from('error_reports')
+        .insert({
+          severity: report.severity,
+          category: report.category,
+          message: report.message,
+          stack: report.stack,
+          code: report.code,
+          timestamp: report.timestamp,
+          context: report.context,
+          fingerprint: report.fingerprint,
+          occurrences: report.occurrences,
+          first_seen_at: report.firstSeenAt,
+          last_seen_at: report.lastSeenAt,
+          resolved: report.resolved,
+        })
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      const errorReport = this.mapToErrorReport(data);
+
+      // Check alert rules
+      this.checkAlertRules(errorReport);
+
+      // Log to console in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`[${severity}] ${category}: ${error.message}`);
+        if (error.stack) console.error(error.stack);
+      }
+
+      return errorReport;
+    } catch (err) {
+      console.error('Failed to capture error:', err);
+      throw err;
+    }
+  }
+
+  // Capture message (non-error)
+  async captureMessage(
+    message: string,
+    severity: ErrorSeverity = ErrorSeverity.INFO,
+    context: Partial<ErrorContext> = {}
+  ): Promise<ErrorReport> {
+    const error = new Error(message);
+    return this.capture(error, severity, context);
+  }
+
+  // Get error report
+  async get(errorId: string): Promise<ErrorReport | null> {
+    try {
+      const { data, error } = await supabase
+        .from('error_reports')
+        .select('*')
+        .eq('id', errorId)
+        .single();
+
+      if (error || !data) return null;
+
+      return this.mapToErrorReport(data);
+    } catch (error) {
+      console.error('Failed to get error report:', error);
+      return null;
+    }
+  }
+
+  // List error reports
+  async list(filter: {
+    severity?: ErrorSeverity[];
+    category?: ErrorCategory[];
+    resolved?: boolean;
+    startDate?: string;
+    endDate?: string;
+    userId?: string;
+    limit?: number;
+  } = {}): Promise<ErrorReport[]> {
+    try {
+      let query = supabase.from('error_reports').select('*');
+
+      if (filter.severity && filter.severity.length > 0) {
+        query = query.in('severity', filter.severity);
+      }
+
+      if (filter.category && filter.category.length > 0) {
+        query = query.in('category', filter.category);
+      }
+
+      if (filter.resolved !== undefined) {
+        query = query.eq('resolved', filter.resolved);
+      }
+
+      if (filter.startDate) {
+        query = query.gte('timestamp', filter.startDate);
+      }
+
+      if (filter.endDate) {
+        query = query.lte('timestamp', filter.endDate);
+      }
+
+      if (filter.userId) {
+        query = query.eq('context->>userId', filter.userId);
+      }
+
+      query = query.order('timestamp', { ascending: false });
+
+      if (filter.limit) {
+        query = query.limit(filter.limit);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      return (data || []).map(this.mapToErrorReport);
+    } catch (error) {
+      console.error('Failed to list errors:', error);
+      return [];
+    }
+  }
+
+  // Get error groups
+  async getGroups(filter: {
+    resolved?: boolean;
+    minOccurrences?: number;
+    startDate?: string;
+    endDate?: string;
+  } = {}): Promise<ErrorGroup[]> {
+    try {
+      let query = supabase
+        .from('error_reports')
+        .select('fingerprint, message, category, severity, occurrences, first_seen_at, last_seen_at, resolved, context');
+
+      if (filter.resolved !== undefined) {
+        query = query.eq('resolved', filter.resolved);
+      }
+
+      if (filter.startDate) {
+        query = query.gte('timestamp', filter.startDate);
+      }
+
+      if (filter.endDate) {
+        query = query.lte('timestamp', filter.endDate);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Group by fingerprint
+      const groups = new Map<string, ErrorGroup>();
+
+      data?.forEach((err) => {
+        if (!groups.has(err.fingerprint)) {
+          groups.set(err.fingerprint, {
+            fingerprint: err.fingerprint,
+            message: err.message,
+            category: err.category,
+            severity: err.severity,
+            count: 0,
+            firstSeen: err.first_seen_at,
+            lastSeen: err.last_seen_at,
+            affectedUsers: new Set(),
+            resolved: err.resolved,
+            samples: [],
+          } as any);
+        }
+
+        const group = groups.get(err.fingerprint)!;
+        group.count += err.occurrences;
+        if (err.context?.userId) {
+          (group.affectedUsers as any).add(err.context.userId);
+        }
+        if (group.samples.length < 3) {
+          group.samples.push(this.mapToErrorReport(err));
+        }
+      });
+
+      // Convert Set to count
+      const result = Array.from(groups.values()).map((group) => ({
+        ...group,
+        affectedUsers: (group.affectedUsers as any).size,
+      }));
+
+      // Filter by min occurrences
+      if (filter.minOccurrences) {
+        return result.filter((g) => g.count >= filter.minOccurrences);
+      }
+
+      return result.sort((a, b) => b.count - a.count);
+    } catch (error) {
+      console.error('Failed to get error groups:', error);
+      return [];
+    }
+  }
+
+  // Get metrics
+  async getMetrics(filter: {
+    startDate?: string;
+    endDate?: string;
+  } = {}): Promise<ErrorMetrics> {
+    try {
+      let query = supabase.from('error_reports').select('*');
+
+      if (filter.startDate) {
+        query = query.gte('timestamp', filter.startDate);
+      }
+
+      if (filter.endDate) {
+        query = query.lte('timestamp', filter.endDate);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const metrics: ErrorMetrics = {
+        total: data?.length || 0,
+        bySeverity: {
+          [ErrorSeverity.DEBUG]: 0,
+          [ErrorSeverity.INFO]: 0,
+          [ErrorSeverity.WARNING]: 0,
+          [ErrorSeverity.ERROR]: 0,
+          [ErrorSeverity.FATAL]: 0,
+        },
+        byCategory: {
+          [ErrorCategory.VALIDATION]: 0,
+          [ErrorCategory.AUTHENTICATION]: 0,
+          [ErrorCategory.AUTHORIZATION]: 0,
+          [ErrorCategory.DATABASE]: 0,
+          [ErrorCategory.NETWORK]: 0,
+          [ErrorCategory.PAYMENT]: 0,
+          [ErrorCategory.BUSINESS_LOGIC]: 0,
+          [ErrorCategory.SYSTEM]: 0,
+          [ErrorCategory.THIRD_PARTY]: 0,
+          [ErrorCategory.UNKNOWN]: 0,
+        },
+        errorRate: 0,
+        affectedUsers: 0,
+        topErrors: [],
+        timeline: [],
+      };
+
+      const affectedUsers = new Set<string>();
+      const errorCounts = new Map<string, { count: number; message: string }>();
+      const hourCounts: Record<string, number> = {};
+
+      data?.forEach((err) => {
+        metrics.bySeverity[err.severity as ErrorSeverity]++;
+        metrics.byCategory[err.category as ErrorCategory]++;
+
+        if (err.context?.userId) {
+          affectedUsers.add(err.context.userId);
+        }
+
+        // Count by fingerprint
+        const current = errorCounts.get(err.fingerprint) || { count: 0, message: err.message };
+        current.count += err.occurrences;
+        errorCounts.set(err.fingerprint, current);
+
+        // Count by hour
+        const hour = new Date(err.timestamp).toISOString().slice(0, 13);
+        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      });
+
+      metrics.affectedUsers = affectedUsers.size;
+
+      // Top errors
+      metrics.topErrors = Array.from(errorCounts.entries())
+        .map(([fingerprint, data]) => ({
+          fingerprint,
+          count: data.count,
+          message: data.message,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      // Timeline
+      metrics.timeline = Object.entries(hourCounts)
+        .map(([hour, count]) => ({ hour, count }))
+        .sort((a, b) => a.hour.localeCompare(b.hour));
+
+      // Calculate error rate (errors per hour)
+      if (metrics.timeline.length > 0) {
+        metrics.errorRate = metrics.total / metrics.timeline.length;
+      }
+
+      return metrics;
+    } catch (error) {
+      console.error('Failed to get metrics:', error);
+      return {
+        total: 0,
+        bySeverity: {} as any,
+        byCategory: {} as any,
+        errorRate: 0,
+        affectedUsers: 0,
+        topErrors: [],
+        timeline: [],
+      };
+    }
+  }
+
+  // Resolve error
+  async resolve(errorId: string, userId: string, notes?: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('error_reports')
+        .update({
+          resolved: true,
+          resolved_at: new Date().toISOString(),
+          resolved_by: userId,
+          resolution_notes: notes,
+        })
+        .eq('id', errorId);
+
+      return !error;
+    } catch (error) {
+      console.error('Failed to resolve error:', error);
+      return false;
+    }
+  }
+
+  // Resolve error group
+  async resolveGroup(fingerprint: string, userId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('error_reports')
+        .update({
+          resolved: true,
+          resolved_at: new Date().toISOString(),
+          resolved_by: userId,
+        })
+        .eq('fingerprint', fingerprint)
+        .eq('resolved', false)
+        .select('id');
+
+      if (error) throw error;
+
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Failed to resolve error group:', error);
+      return 0;
+    }
+  }
+
+  // Add alert rule
+  addAlertRule(rule: Omit<AlertRule, 'id'>): string {
+    const id = `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.alertRules.push({ id, ...rule });
+    return id;
+  }
+
+  // Remove alert rule
+  removeAlertRule(id: string): boolean {
+    const index = this.alertRules.findIndex((r) => r.id === id);
+    if (index >= 0) {
+      this.alertRules.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  // Check alert rules
+  private async checkAlertRules(error: ErrorReport): Promise<void> {
+    for (const rule of this.alertRules) {
+      if (!rule.enabled) continue;
+
+      // Check conditions
+      if (rule.condition.severity && !rule.condition.severity.includes(error.severity)) {
+        continue;
+      }
+
+      if (rule.condition.category && !rule.condition.category.includes(error.category)) {
+        continue;
+      }
+
+      // Check threshold
+      if (rule.condition.threshold && rule.condition.timeWindow) {
+        const since = new Date();
+        since.setMinutes(since.getMinutes() - rule.condition.timeWindow);
+
+        const recent = await this.list({
+          startDate: since.toISOString(),
+          severity: rule.condition.severity,
+          category: rule.condition.category,
+        });
+
+        if (recent.length < rule.condition.threshold) {
+          continue;
+        }
+      }
+
+      // Trigger alert
+      this.triggerAlert(rule, error);
+    }
+  }
+
+  // Trigger alert
+  private async triggerAlert(rule: AlertRule, error: ErrorReport): Promise<void> {
+    // Implementation would send notifications via email, webhook, etc.
+    console.log(`Alert triggered: ${rule.name}`, error);
+  }
+
+  // Categorize error
+  private categorizeError(error: Error): ErrorCategory {
+    const message = error.message.toLowerCase();
+    const name = error.name.toLowerCase();
+
+    if (name.includes('validation') || message.includes('validation')) {
+      return ErrorCategory.VALIDATION;
+    }
+
+    if (name.includes('auth') || message.includes('unauthorized') || message.includes('authentication')) {
+      return ErrorCategory.AUTHENTICATION;
+    }
+
+    if (message.includes('permission') || message.includes('forbidden')) {
+      return ErrorCategory.AUTHORIZATION;
+    }
+
+    if (name.includes('database') || message.includes('query') || message.includes('connection')) {
+      return ErrorCategory.DATABASE;
+    }
+
+    if (name.includes('network') || message.includes('fetch') || message.includes('timeout')) {
+      return ErrorCategory.NETWORK;
+    }
+
+    if (message.includes('payment') || message.includes('transaction')) {
+      return ErrorCategory.PAYMENT;
+    }
+
+    if (name.includes('system') || message.includes('system')) {
+      return ErrorCategory.SYSTEM;
+    }
+
+    return ErrorCategory.UNKNOWN;
+  }
+
+  // Generate fingerprint
+  private generateFingerprint(error: Error, category: ErrorCategory): string {
+    const crypto = require('crypto');
+    const data = `${category}:${error.name}:${error.message}:${this.getStackFingerprint(error.stack)}`;
+    return crypto.createHash('md5').update(data).digest('hex');
+  }
+
+  // Get stack fingerprint
+  private getStackFingerprint(stack?: string): string {
+    if (!stack) return '';
+
+    // Take first 3 lines of stack (most relevant)
+    const lines = stack.split('\n').slice(0, 3);
+    return lines.join('\n');
+  }
+
+  // Find by fingerprint
+  private async findByFingerprint(fingerprint: string): Promise<ErrorReport | null> {
+    try {
+      const { data, error } = await supabase
+        .from('error_reports')
+        .select('*')
+        .eq('fingerprint', fingerprint)
+        .eq('resolved', false)
+        .order('last_seen_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) return null;
+
+      return this.mapToErrorReport(data);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // Update occurrence
+  private async updateOccurrence(errorId: string): Promise<ErrorReport> {
+    const { data, error } = await supabase
+      .from('error_reports')
+      .update({
+        occurrences: supabase.raw('occurrences + 1'),
+        last_seen_at: new Date().toISOString(),
       })
+      .eq('id', errorId)
       .select()
       .single();
 
-    if (dbError) {
-      console.error("Error logging error to database:", dbError);
-      return null;
-    }
+    if (error) throw error;
 
-    // Log to console for immediate visibility
-    console.error(`[${error.severity.toUpperCase()}] ${error.error_type}:`, error.message);
-
-    // If it's a custody error, also log to custody audit
-    if (error.error_type === "custody" && error.escrow_id) {
-      await logCustodyAudit({
-        escrow_id: error.escrow_id,
-        action_type: "funds_released", // Use closest match
-        actor_address: error.user_address || "system",
-        custody_address: "",
-        metadata: {
-          error: true,
-          error_message: error.message,
-          severity: error.severity,
-        },
-      });
-    }
-
-    return data.id;
-  } catch (err) {
-    console.error("Failed to log error:", err);
-    return null;
+    return this.mapToErrorReport(data);
   }
-}
 
-/**
- * Log API error
- */
-export async function logApiError(
-  endpoint: string,
-  error: Error,
-  userAddress?: string,
-  severity: "low" | "medium" | "high" | "critical" = "medium"
-): Promise<void> {
-  await logError({
-    error_type: "api",
-    severity,
-    message: error.message,
-    stack_trace: error.stack,
-    user_address: userAddress,
-    endpoint,
-    metadata: {
-      name: error.name,
-    },
-  });
-}
+  // Clean up old errors
+  async cleanup(daysToKeep: number = 90): Promise<number> {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-/**
- * Log custody error
- */
-export async function logCustodyError(
-  escrowId: string,
-  error: Error,
-  userAddress?: string,
-  severity: "low" | "medium" | "high" | "critical" = "high"
-): Promise<void> {
-  await logError({
-    error_type: "custody",
-    severity,
-    message: error.message,
-    stack_trace: error.stack,
-    user_address: userAddress,
-    escrow_id: escrowId,
-    metadata: {
-      name: error.name,
-    },
-  });
-}
+      const { data, error } = await supabase
+        .from('error_reports')
+        .delete()
+        .lt('timestamp', cutoffDate.toISOString())
+        .eq('resolved', true)
+        .select('id');
 
-/**
- * Log database error
- */
-export async function logDatabaseError(
-  error: Error,
-  query?: string,
-  severity: "low" | "medium" | "high" | "critical" = "high"
-): Promise<void> {
-  await logError({
-    error_type: "database",
-    severity,
-    message: error.message,
-    stack_trace: error.stack,
-    metadata: {
-      query,
-      name: error.name,
-    },
-  });
-}
+      if (error) throw error;
 
-/**
- * Log network error
- */
-export async function logNetworkError(
-  endpoint: string,
-  error: Error,
-  severity: "low" | "medium" | "high" | "critical" = "medium"
-): Promise<void> {
-  await logError({
-    error_type: "network",
-    severity,
-    message: error.message,
-    stack_trace: error.stack,
-    endpoint,
-    metadata: {
-      name: error.name,
-    },
-  });
-}
-
-/**
- * Log validation error
- */
-export async function logValidationError(
-  message: string,
-  field?: string,
-  value?: unknown,
-  userAddress?: string
-): Promise<void> {
-  await logError({
-    error_type: "validation",
-    severity: "low",
-    message,
-    user_address: userAddress,
-    metadata: {
-      field,
-      value,
-    },
-  });
-}
-
-/**
- * Get error summary
- */
-export async function getErrorSummary(
-  timeRange: "1h" | "24h" | "7d" | "30d" = "24h"
-): Promise<ErrorSummary> {
-  try {
-    const now = new Date();
-    let startTime = new Date();
-
-    switch (timeRange) {
-      case "1h":
-        startTime = new Date(now.getTime() - 60 * 60 * 1000);
-        break;
-      case "24h":
-        startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case "7d":
-        startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "30d":
-        startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-    }
-
-    const { data: errors, error: dbError } = await supabase
-      .from("error_logs")
-      .select("*")
-      .gte("timestamp", startTime.toISOString())
-      .order("timestamp", { ascending: false });
-
-    if (dbError || !errors) {
-      return {
-        totalErrors: 0,
-        byType: {},
-        bySeverity: {},
-        recentErrors: [],
-        unresolvedCount: 0,
-      };
-    }
-
-    const byType: Record<string, number> = {};
-    const bySeverity: Record<string, number> = {};
-    let unresolvedCount = 0;
-
-    errors.forEach((e) => {
-      byType[e.error_type] = (byType[e.error_type] || 0) + 1;
-      bySeverity[e.severity] = (bySeverity[e.severity] || 0) + 1;
-      if (!e.resolved) unresolvedCount++;
-    });
-
-    return {
-      totalErrors: errors.length,
-      byType,
-      bySeverity,
-      recentErrors: errors.slice(0, 10) as ErrorLog[],
-      unresolvedCount,
-    };
-  } catch (err) {
-    console.error("Error in getErrorSummary:", err);
-    return {
-      totalErrors: 0,
-      byType: {},
-      bySeverity: {},
-      recentErrors: [],
-      unresolvedCount: 0,
-    };
-  }
-}
-
-/**
- * Get critical errors (unresolved, high/critical severity)
- */
-export async function getCriticalErrors(limit: number = 10): Promise<ErrorLog[]> {
-  try {
-    const { data, error } = await supabase
-      .from("error_logs")
-      .select("*")
-      .eq("resolved", false)
-      .in("severity", ["high", "critical"])
-      .order("timestamp", { ascending: false })
-      .limit(limit);
-
-    if (error || !data) {
-      return [];
-    }
-
-    return data as ErrorLog[];
-  } catch (err) {
-    console.error("Error in getCriticalErrors:", err);
-    return [];
-  }
-}
-
-/**
- * Mark error as resolved
- */
-export async function markErrorResolved(
-  errorId: string,
-  resolvedBy?: string
-): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from("error_logs")
-      .update({
-        resolved: true,
-        resolved_at: new Date().toISOString(),
-        resolved_by: resolvedBy,
-      })
-      .eq("id", errorId);
-
-    if (error) {
-      console.error("Error marking error as resolved:", error);
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error("Error in markErrorResolved:", err);
-    return false;
-  }
-}
-
-/**
- * Clean up old resolved errors
- */
-export async function cleanupOldErrors(daysOld: number = 30): Promise<number> {
-  try {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-
-    const { data, error } = await supabase
-      .from("error_logs")
-      .delete()
-      .eq("resolved", true)
-      .lt("timestamp", cutoffDate.toISOString())
-      .select();
-
-    if (error) {
-      console.error("Error cleaning up old errors:", error);
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Failed to cleanup errors:', error);
       return 0;
     }
+  }
 
-    return data?.length || 0;
-  } catch (err) {
-    console.error("Error in cleanupOldErrors:", err);
-    return 0;
+  // Map database record to ErrorReport
+  private mapToErrorReport(data: any): ErrorReport {
+    return {
+      id: data.id,
+      severity: data.severity,
+      category: data.category,
+      message: data.message,
+      stack: data.stack,
+      code: data.code,
+      timestamp: data.timestamp,
+      context: data.context || {},
+      fingerprint: data.fingerprint,
+      occurrences: data.occurrences,
+      firstSeenAt: data.first_seen_at,
+      lastSeenAt: data.last_seen_at,
+      resolved: data.resolved,
+      resolvedAt: data.resolved_at,
+      resolvedBy: data.resolved_by,
+    };
   }
 }
 
-/**
- * Get errors by type
- */
-export async function getErrorsByType(
-  errorType: ErrorLog["error_type"],
-  limit: number = 20
-): Promise<ErrorLog[]> {
-  try {
-    const { data, error } = await supabase
-      .from("error_logs")
-      .select("*")
-      .eq("error_type", errorType)
-      .order("timestamp", { ascending: false })
-      .limit(limit);
+// Export singleton instance
+export const errorTracking = ErrorTrackingSystem.getInstance();
 
-    if (error || !data) {
-      return [];
+// Convenience functions
+export const captureError = (
+  error: Error,
+  severity?: ErrorSeverity,
+  context?: Partial<ErrorContext>
+) => errorTracking.capture(error, severity, context);
+
+export const captureMessage = (
+  message: string,
+  severity?: ErrorSeverity,
+  context?: Partial<ErrorContext>
+) => errorTracking.captureMessage(message, severity, context);
+
+export const resolveError = (errorId: string, userId: string, notes?: string) =>
+  errorTracking.resolve(errorId, userId, notes);
+
+export const getErrorMetrics = (filter?: any) => errorTracking.getMetrics(filter);
+
+// Error boundary helper
+export class ErrorBoundary {
+  static async wrap<T>(
+    fn: () => Promise<T>,
+    context?: Partial<ErrorContext>
+  ): Promise<T> {
+    try {
+      return await fn();
+    } catch (error) {
+      await captureError(error as Error, ErrorSeverity.ERROR, context);
+      throw error;
     }
-
-    return data as ErrorLog[];
-  } catch (err) {
-    console.error("Error in getErrorsByType:", err);
-    return [];
   }
 }
-
-/**
- * Get error trends (count by day)
- */
-export async function getErrorTrends(
-  days: number = 7
-): Promise<{ date: string; count: number; critical: number }[]> {
-  try {
-    const now = new Date();
-    const trends: { date: string; count: number; critical: number }[] = [];
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const dateStr = date.toISOString().split("T")[0];
-      const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000).toISOString();
-
-      const { data } = await supabase
-        .from("error_logs")
-        .select("severity")
-        .gte("timestamp", dateStr)
-        .lt("timestamp", nextDay);
-
-      const count = data?.length || 0;
-      const critical = data?.filter((e) => e.severity === "critical").length || 0;
-
-      trends.push({ date: dateStr, count, critical });
-    }
-
-    return trends;
-  } catch (err) {
-    console.error("Error in getErrorTrends:", err);
-    return [];
-  }
-}
-
-/**
- * Safe wrapper for async functions with automatic error logging
- */
-export async function withErrorTracking<T>(
-  fn: () => Promise<T>,
-  context: {
-    errorType: ErrorLog["error_type"];
-    severity?: ErrorLog["severity"];
-    endpoint?: string;
-    userAddress?: string;
-    escrowId?: string;
-  }
-): Promise<T> {
-  try {
-    return await fn();
-  } catch (error) {
-    await logError({
-      error_type: context.errorType,
-      severity: context.severity || "medium",
-      message: error instanceof Error ? error.message : String(error),
-      stack_trace: error instanceof Error ? error.stack : undefined,
-      user_address: context.userAddress,
-      escrow_id: context.escrowId,
-      endpoint: context.endpoint,
-    });
-    throw error;
-  }
-}
-
