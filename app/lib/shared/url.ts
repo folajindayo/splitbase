@@ -1,109 +1,105 @@
 /**
- * URL Utilities
- * Helper functions for URL manipulation
+ * URL utility functions
  */
 
-/**
- * Build URL with query parameters
- */
-export function buildUrl(
-  base: string,
-  params?: Record<string, string | number | boolean | undefined>
-): string {
-  if (!params) return base;
-
-  const url = new URL(base, window.location.origin);
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined) {
-      url.searchParams.append(key, String(value));
-    }
+export function parseQueryString(queryString: string): Record<string, string> {
+  const params = new URLSearchParams(queryString);
+  const result: Record<string, string> = {};
+  
+  params.forEach((value, key) => {
+    result[key] = value;
   });
-
-  return url.toString();
+  
+  return result;
 }
 
-/**
- * Parse query parameters from URL
- */
-export function parseQueryParams(url: string): Record<string, string> {
-  const params: Record<string, string> = {};
+export function buildQueryString(params: Record<string, any>): string {
+  const searchParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      searchParams.append(key, String(value));
+    }
+  });
+  
+  return searchParams.toString();
+}
+
+export function addQueryParams(url: string, params: Record<string, any>): string {
   const urlObj = new URL(url, window.location.origin);
-
-  urlObj.searchParams.forEach((value, key) => {
-    params[key] = value;
-  });
-
-  return params;
-}
-
-/**
- * Get query parameter value
- */
-export function getQueryParam(name: string): string | null {
-  if (typeof window === "undefined") return null;
-
-  const params = new URLSearchParams(window.location.search);
-  return params.get(name);
-}
-
-/**
- * Update query parameters without reload
- */
-export function updateQueryParams(
-  params: Record<string, string | null>,
-  options: { replace?: boolean } = {}
-): void {
-  if (typeof window === "undefined") return;
-
-  const url = new URL(window.location.href);
-
+  
   Object.entries(params).forEach(([key, value]) => {
-    if (value === null) {
-      url.searchParams.delete(key);
-    } else {
-      url.searchParams.set(key, value);
+    if (value !== null && value !== undefined) {
+      urlObj.searchParams.set(key, String(value));
     }
   });
-
-  const method = options.replace ? "replaceState" : "pushState";
-  window.history[method]({}, "", url.toString());
+  
+  return urlObj.toString();
 }
 
-/**
- * Remove query parameters
- */
-export function removeQueryParams(...keys: string[]): void {
-  if (typeof window === "undefined") return;
-
-  const url = new URL(window.location.href);
-
-  keys.forEach((key) => {
-    url.searchParams.delete(key);
+export function removeQueryParams(url: string, params: string[]): string {
+  const urlObj = new URL(url, window.location.origin);
+  
+  params.forEach((param) => {
+    urlObj.searchParams.delete(param);
   });
-
-  window.history.replaceState({}, "", url.toString());
+  
+  return urlObj.toString();
 }
 
-/**
- * Check if URL is absolute
- */
-export function isAbsoluteUrl(url: string): boolean {
-  return /^https?:\/\//i.test(url);
+export function getQueryParam(url: string, param: string): string | null {
+  const urlObj = new URL(url, window.location.origin);
+  return urlObj.searchParams.get(param);
 }
 
-/**
- * Join URL parts
- */
-export function joinUrls(...parts: string[]): string {
-  return parts
-    .map((part, index) => {
-      if (index === 0) {
-        return part.replace(/\/+$/, "");
-      }
-      return part.replace(/^\/+/, "").replace(/\/+$/, "");
-    })
+export function isValidUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getDomain(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch {
+    return "";
+  }
+}
+
+export function getPath(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.pathname;
+  } catch {
+    return "";
+  }
+}
+
+export function joinPaths(...paths: string[]): string {
+  return paths
+    .map((path) => path.replace(/^\/+|\/+$/g, ""))
     .filter(Boolean)
     .join("/");
 }
 
+export function isAbsoluteUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+export function isRelativeUrl(url: string): boolean {
+  return !isAbsoluteUrl(url);
+}
+
+export function normalizeUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    urlObj.hash = "";
+    return urlObj.toString().replace(/\/+$/, "");
+  } catch {
+    return url;
+  }
+}
