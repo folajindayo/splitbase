@@ -1,49 +1,32 @@
 {
   "name": "splitbase",
-  "version": "2.0.0",
-  "description": "Enterprise Custodial Escrow Platform for Web3",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "cd app && npm run dev",
-    "build": "cd app && npm run build",
-    "start": "cd app && npm start",
-    "lint": "cd app && npm run lint",
-    "type-check": "cd app && npx tsc --noEmit",
-    "setup": "./scripts/setup-custody.sh",
-    "validate": "node scripts/validate-migrations.js",
-    "health-check": "./scripts/health-check.sh",
-    "docker:build": "docker build -t splitbase:latest .",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "test": "cd app && npm test",
-    "postinstall": "cd app && npm install"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "type-check": "tsc --noEmit"
   },
-  "keywords": [
-    "web3",
-    "escrow",
-    "custody",
-    "ethereum",
-    "base",
-    "blockchain",
-    "payment",
-    "crypto",
-    "nextjs",
-    "typescript"
-  ],
-  "author": "SplitBase Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/folajindayo/splitbase.git"
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^3.22.4"
   },
-  "bugs": {
-    "url": "https://github.com/folajindayo/splitbase/issues"
-  },
-  "homepage": "https://github.com/folajindayo/splitbase#readme",
-  "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.6",
+    "@types/react": "^18.2.46",
+    "@types/react-dom": "^18.2.18",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "typescript": "^5.3.3"
   }
 }
-
