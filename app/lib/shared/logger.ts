@@ -1,75 +1,70 @@
 /**
- * Logger Utility
- * Structured logging for development and production
+ * Logging utility
  */
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-interface LogContext {
-  [key: string]: any;
+interface LogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: Date;
+  data?: any;
 }
 
 class Logger {
-  private level: LogLevel = "info";
-  private context: LogContext = {};
+  private isDevelopment = process.env.NODE_ENV === "development";
+  private logs: LogEntry[] = [];
+  private maxLogs = 1000;
 
-  constructor() {
-    if (process.env.NODE_ENV === "development") {
-      this.level = "debug";
+  private log(level: LogLevel, message: string, data?: any): void {
+    const entry: LogEntry = {
+      level,
+      message,
+      timestamp: new Date(),
+      data,
+    };
+
+    this.logs.push(entry);
+    if (this.logs.length > this.maxLogs) {
+      this.logs.shift();
     }
-  }
 
-  setLevel(level: LogLevel): void {
-    this.level = level;
-  }
-
-  setContext(context: LogContext): void {
-    this.context = { ...this.context, ...context };
-  }
-
-  private shouldLog(level: LogLevel): boolean {
-    const levels: LogLevel[] = ["debug", "info", "warn", "error"];
-    return levels.indexOf(level) >= levels.indexOf(this.level);
-  }
-
-  private formatMessage(level: LogLevel, message: string, data?: any): string {
-    const timestamp = new Date().toISOString();
-    const contextStr = Object.keys(this.context).length
-      ? JSON.stringify(this.context)
-      : "";
-    const dataStr = data ? JSON.stringify(data) : "";
-
-    return `[${timestamp}] ${level.toUpperCase()} ${message} ${contextStr} ${dataStr}`.trim();
+    if (this.isDevelopment) {
+      const logFn = console[level] || console.log;
+      if (data) {
+        logFn(`[${level.toUpperCase()}] ${message}`, data);
+      } else {
+        logFn(`[${level.toUpperCase()}] ${message}`);
+      }
+    }
   }
 
   debug(message: string, data?: any): void {
-    if (this.shouldLog("debug")) {
-      console.debug(this.formatMessage("debug", message, data));
-    }
+    this.log("debug", message, data);
   }
 
   info(message: string, data?: any): void {
-    if (this.shouldLog("info")) {
-      console.info(this.formatMessage("info", message, data));
-    }
+    this.log("info", message, data);
   }
 
   warn(message: string, data?: any): void {
-    if (this.shouldLog("warn")) {
-      console.warn(this.formatMessage("warn", message, data));
-    }
+    this.log("warn", message, data);
   }
 
-  error(message: string, error?: Error | any): void {
-    if (this.shouldLog("error")) {
-      const errorData = error instanceof Error
-        ? { message: error.message, stack: error.stack }
-        : error;
-      console.error(this.formatMessage("error", message, errorData));
+  error(message: string, error?: any): void {
+    this.log("error", message, error);
+  }
+
+  getLogs(level?: LogLevel): LogEntry[] {
+    if (level) {
+      return this.logs.filter((log) => log.level === level);
     }
+    return [...this.logs];
+  }
+
+  clearLogs(): void {
+    this.logs = [];
   }
 }
 
 export const logger = new Logger();
-export { Logger };
-
