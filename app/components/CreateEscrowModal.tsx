@@ -569,13 +569,13 @@ export default function CreateEscrowModal({ onClose, onSuccess }: CreateEscrowMo
           )}
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-          <div className="font-medium text-blue-800 mb-2">🔒 Secure Custody</div>
-          <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+          <div className="font-medium text-yellow-800 mb-2">⚠️ Important</div>
+          <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
             <li>You will be the buyer for this escrow</li>
-            <li>Funds will be held securely in SplitBase's custodial wallet</li>
-            <li>You retain full control - only you can approve fund release</li>
-            <li>Funds are protected and only released when conditions are met</li>
+            <li>You will need to deposit funds to the provided address</li>
+            <li>Funds should be sent directly to the seller's address</li>
+            <li>This system tracks the escrow agreement, not the actual funds</li>
           </ul>
         </div>
       </div>

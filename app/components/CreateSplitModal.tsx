@@ -332,8 +332,8 @@ export default function CreateSplitModal({ onClose, onSuccess }: CreateSplitModa
           <div className="border-t border-gray-200 pt-6 mb-4">
             <div className="flex items-center justify-between mb-4">
               <p className="text-gray-600">
-                Add recipients and their split percentages. The total must equal 100%.
-              </p>
+              Add recipients and their split percentages. The total must equal 100%.
+            </p>
               <button
                 type="button"
                 onClick={() => setShowTemplatesModal(true)}

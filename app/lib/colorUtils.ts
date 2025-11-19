@@ -318,3 +318,4 @@ export function getTemperature(hex: string): "warm" | "cool" | "neutral" {
   return "neutral";
 }
 
+

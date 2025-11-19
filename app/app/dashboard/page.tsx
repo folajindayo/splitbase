@@ -198,7 +198,7 @@ export default function Dashboard() {
         {/* Dashboard Stats */}
         {!loading && splits.length > 0 && (
           <>
-            <DashboardStats splits={splits} />
+          <DashboardStats splits={splits} />
             <SplitStats splits={splits} />
             <RecentActivity splits={splits} />
           </>
