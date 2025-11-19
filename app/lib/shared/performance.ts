@@ -1,144 +1,103 @@
 /**
- * Performance utilities
- * Functions for measuring and optimizing performance
+ * Performance measurement utilities
  */
 
-/**
- * Measure execution time of a function
- */
-export async function measureTime<T>(
-  label: string,
-  fn: () => T | Promise<T>
+export class PerformanceTimer {
+  private startTime: number;
+  private marks: Map<string, number>;
+
+  constructor() {
+    this.startTime = performance.now();
+    this.marks = new Map();
+  }
+
+  mark(name: string): void {
+    this.marks.set(name, performance.now());
+  }
+
+  measure(name: string, startMark?: string): number {
+    const end = performance.now();
+    const start = startMark ? this.marks.get(startMark) || this.startTime : this.startTime;
+    const duration = end - start;
+
+    console.log(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
+    return duration;
+  }
+
+  getElapsed(): number {
+    return performance.now() - this.startTime;
+  }
+
+  reset(): void {
+    this.startTime = performance.now();
+    this.marks.clear();
+  }
+}
+
+export function measureTime<T>(fn: () => T, label?: string): T {
+  const start = performance.now();
+  const result = fn();
+  const end = performance.now();
+
+  if (label) {
+    console.log(`[Time] ${label}: ${(end - start).toFixed(2)}ms`);
+  }
+
+  return result;
+}
+
+export async function measureTimeAsync<T>(
+  fn: () => Promise<T>,
+  label?: string
 ): Promise<T> {
   const start = performance.now();
   const result = await fn();
   const end = performance.now();
-  console.log(`[${label}] took ${(end - start).toFixed(2)}ms`);
+
+  if (label) {
+    console.log(`[Time] ${label}: ${(end - start).toFixed(2)}ms`);
+  }
+
   return result;
 }
 
-/**
- * Create a memoized version of a function
- */
-export function memoize<T extends (...args: any[]) => any>(
-  fn: T,
-  keyGenerator?: (...args: Parameters<T>) => string
-): T {
-  const cache = new Map<string, ReturnType<T>>();
-
-  return ((...args: Parameters<T>) => {
-    const key = keyGenerator ? keyGenerator(...args) : JSON.stringify(args);
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-
-    const result = fn(...args);
-    cache.set(key, result);
-    return result;
-  }) as T;
-}
-
-/**
- * Throttle function execution
- */
-export function throttle<T extends (...args: any[]) => any>(
-  fn: T,
-  delay: number
+export function debounceFrame<T extends (...args: any[]) => void>(
+  fn: T
 ): (...args: Parameters<T>) => void {
-  let lastCall = 0;
-  let timeoutId: NodeJS.Timeout | null = null;
+  let frameId: number | null = null;
 
   return (...args: Parameters<T>) => {
-    const now = Date.now();
+    if (frameId !== null) {
+      cancelAnimationFrame(frameId);
+    }
 
-    if (now - lastCall >= delay) {
-      lastCall = now;
+    frameId = requestAnimationFrame(() => {
       fn(...args);
+      frameId = null;
+    });
+  };
+}
+
+export function throttleFrame<T extends (...args: any[]) => void>(
+  fn: T
+): (...args: Parameters<T>) => void {
+  let frameId: number | null = null;
+  let lastArgs: Parameters<T> | null = null;
+
+  const tick = () => {
+    if (lastArgs) {
+      fn(...lastArgs);
+      lastArgs = null;
+      frameId = requestAnimationFrame(tick);
     } else {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(
-        () => {
-          lastCall = Date.now();
-          fn(...args);
-        },
-        delay - (now - lastCall)
-      );
+      frameId = null;
+    }
+  };
+
+  return (...args: Parameters<T>) => {
+    lastArgs = args;
+    if (frameId === null) {
+      frameId = requestAnimationFrame(tick);
     }
   };
 }
-
-/**
- * Debounce function execution
- */
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout | null = null;
-
-  return (...args: Parameters<T>) => {
-    if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-}
-
-/**
- * Lazy load a component or module
- */
-export function lazyLoad<T>(
-  loader: () => Promise<T>,
-  fallback?: T
-): () => Promise<T> {
-  let cached: T | null = null;
-  let loading: Promise<T> | null = null;
-
-  return async () => {
-    if (cached) return cached;
-    if (loading) return loading;
-
-    loading = loader();
-    cached = await loading;
-    loading = null;
-
-    return cached || (fallback as T);
-  };
-}
-
-/**
- * Batch multiple calls into a single execution
- */
-export function batch<T>(
-  fn: (items: T[]) => void | Promise<void>,
-  delay: number = 50
-): (item: T) => void {
-  let items: T[] = [];
-  let timeoutId: NodeJS.Timeout | null = null;
-
-  return (item: T) => {
-    items.push(item);
-
-    if (timeoutId) clearTimeout(timeoutId);
-
-    timeoutId = setTimeout(async () => {
-      const itemsToProcess = [...items];
-      items = [];
-      await fn(itemsToProcess);
-    }, delay);
-  };
-}
-
-/**
- * Request idle callback wrapper
- */
-export function runWhenIdle(
-  fn: () => void,
-  options?: IdleRequestOptions
-): void {
-  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-    window.requestIdleCallback(fn, options);
-  } else {
-    setTimeout(fn, 1);
-  }
-}
-
