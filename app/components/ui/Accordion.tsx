@@ -1,135 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 
-interface AccordionItem {
+interface AccordionItemProps {
   id: string;
   title: string;
-  content: React.ReactNode;
-  icon?: React.ReactNode;
-  disabled?: boolean;
+  children: ReactNode;
+  isOpen?: boolean;
+  onToggle?: (id: string) => void;
 }
 
-interface AccordionProps {
-  items: AccordionItem[];
-  allowMultiple?: boolean;
-  defaultOpen?: string[];
-  variant?: "default" | "bordered" | "separated";
-}
-
-export default function Accordion({
-  items,
-  allowMultiple = false,
-  defaultOpen = [],
-  variant = "default",
-}: AccordionProps) {
-  const [openItems, setOpenItems] = useState<string[]>(defaultOpen);
-
-  const toggleItem = (itemId: string) => {
-    if (allowMultiple) {
-      setOpenItems((prev) =>
-        prev.includes(itemId)
-          ? prev.filter((id) => id !== itemId)
-          : [...prev, itemId]
-      );
-    } else {
-      setOpenItems((prev) => (prev.includes(itemId) ? [] : [itemId]));
-    }
-  };
-
-  const isOpen = (itemId: string) => openItems.includes(itemId);
-
-  const containerClasses = {
-    default: "divide-y divide-gray-200",
-    bordered: "border border-gray-200 rounded-lg divide-y divide-gray-200",
-    separated: "space-y-4",
-  };
-
-  const itemClasses = {
-    default: "",
-    bordered: "",
-    separated: "border border-gray-200 rounded-lg overflow-hidden",
-  };
-
-  return (
-    <div className={containerClasses[variant]}>
-      {items.map((item) => {
-        const open = isOpen(item.id);
-
-        return (
-          <div key={item.id} className={itemClasses[variant]}>
-            <button
-              onClick={() => !item.disabled && toggleItem(item.id)}
-              disabled={item.disabled}
-              className={`w-full px-6 py-4 flex items-center justify-between text-left transition-colors ${
-                item.disabled
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-gray-50"
-              } ${open ? "bg-gray-50" : ""}`}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                {item.icon && <span className="text-xl">{item.icon}</span>}
-                <span className="font-medium text-gray-900">{item.title}</span>
-              </div>
-              <svg
-                className={`w-5 h-5 text-gray-500 transition-transform ${
-                  open ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-
-            {open && (
-              <div className="px-6 py-4 bg-white animate-fade-in">
-                <div className="text-gray-700">{item.content}</div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// Simple accordion item (for one-off use)
 export function AccordionItem({
+  id,
   title,
   children,
-  defaultOpen = false,
-  icon,
-}: {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-  icon?: React.ReactNode;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
+  isOpen = false,
+  onToggle,
+}: AccordionItemProps) {
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border-b border-gray-200">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-6 py-4 flex items-center justify-between text-left transition-colors hover:bg-gray-50 ${
-          isOpen ? "bg-gray-50" : ""
-        }`}
+        className="flex w-full items-center justify-between py-4 text-left font-medium hover:text-blue-600"
+        onClick={() => onToggle?.(id)}
+        aria-expanded={isOpen}
       >
-        <div className="flex items-center gap-3 flex-1">
-          {icon && <span className="text-xl">{icon}</span>}
-          <span className="font-medium text-gray-900">{title}</span>
-        </div>
+        <span>{title}</span>
         <svg
-          className={`w-5 h-5 text-gray-500 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 transform transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -142,14 +39,46 @@ export function AccordionItem({
           />
         </svg>
       </button>
-
-      {isOpen && (
-        <div className="px-6 py-4 bg-white border-t border-gray-200 animate-fade-in">
-          <div className="text-gray-700">{children}</div>
-        </div>
-      )}
+      {isOpen && <div className="pb-4 text-sm text-gray-600">{children}</div>}
     </div>
   );
 }
 
+interface AccordionProps {
+  children: ReactNode;
+  multiple?: boolean;
+  defaultOpen?: string[];
+}
 
+export function Accordion({ children, multiple = false, defaultOpen = [] }: AccordionProps) {
+  const [openItems, setOpenItems] = useState<string[]>(defaultOpen);
+
+  const toggleItem = (id: string) => {
+    if (multiple) {
+      setOpenItems((prev) =>
+        prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      );
+    } else {
+      setOpenItems((prev) => (prev.includes(id) ? [] : [id]));
+    }
+  };
+
+  return (
+    <div className="divide-y divide-gray-200 rounded-lg border border-gray-200">
+      {Array.isArray(children)
+        ? children.map((child: any) =>
+            child
+              ? {
+                  ...child,
+                  props: {
+                    ...child.props,
+                    isOpen: openItems.includes(child.props.id),
+                    onToggle: toggleItem,
+                  },
+                }
+              : null
+          )
+        : children}
+    </div>
+  );
+}
