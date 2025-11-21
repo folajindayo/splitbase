@@ -1,0 +1,18 @@
+/**
+ * Split Limits Constants
+ */
+
+export const SPLIT_LIMITS = {
+  MAX_RECIPIENTS: 100,
+  MIN_RECIPIENTS: 1,
+  MIN_AMOUNT: 1000n,
+  MAX_PERCENTAGE: 100,
+  MIN_PERCENTAGE: 0.01,
+} as const;
+
+export const GAS_LIMITS = {
+  BASE_GAS: 21000,
+  PER_RECIPIENT_GAS: 50000,
+  GAS_BUFFER_PERCENT: 20,
+};
+
