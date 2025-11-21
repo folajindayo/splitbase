@@ -2,31 +2,33 @@
  * Split Payment Mapper
  */
 
-import { SplitPaymentEntity } from '../../domain/entities/split-payment.entity';
+import { SplitPayment } from '../../domain/entities/split-payment.entity';
 import { SplitPaymentDTO } from '../dtos/split-payment.dto';
 
 export class SplitPaymentMapper {
-  static toDTO(entity: SplitPaymentEntity): SplitPaymentDTO {
+  static toDTO(entity: SplitPayment): SplitPaymentDTO {
     return {
       id: entity.id,
-      creator: entity.creator,
-      totalAmount: entity.totalAmount.toString(),
-      token: entity.token,
-      recipients: entity.recipients.map((r) => ({
-        ...r,
-        amount: r.amount.toString(),
-      })),
+      initiator: entity.initiator,
+      totalAmount: entity.totalAmount,
+      recipients: entity.recipients,
       status: entity.status,
-      createdAt: entity.createdAt.toISOString(),
-      executedAt: entity.executedAt?.toISOString(),
-      transactionHash: entity.transactionHash,
-      chainId: entity.chainId,
-      metadata: entity.metadata,
+      createdAt: entity.createdAt,
     };
   }
 
-  static toDTOList(entities: SplitPaymentEntity[]): SplitPaymentDTO[] {
-    return entities.map((entity) => this.toDTO(entity));
+  static toDTOList(entities: SplitPayment[]): SplitPaymentDTO[] {
+    return entities.map(entity => this.toDTO(entity));
+  }
+
+  static toEntity(dto: SplitPaymentDTO): SplitPayment {
+    return new SplitPayment(
+      dto.id,
+      dto.initiator,
+      dto.totalAmount,
+      dto.recipients,
+      dto.status,
+      dto.createdAt
+    );
   }
 }
-
