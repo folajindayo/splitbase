@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://splitbase.app/sitemap.xml
+
