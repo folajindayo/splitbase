@@ -1,17 +1,23 @@
 /**
- * CopyButton Component
+ * Copy Button Component
  */
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
 interface CopyButtonProps {
   text: string;
-  className?: string;
+  label?: string;
+  successMessage?: string;
 }
 
-export function CopyButton({ text, className = '' }: CopyButtonProps) {
+export const CopyButton: React.FC<CopyButtonProps> = ({
+  text,
+  label = 'Copy',
+  successMessage = 'Copied!',
+}) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -19,18 +25,29 @@ export function CopyButton({ text, className = '' }: CopyButtonProps) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    } catch (error) {
+      console.error('Failed to copy:', error);
     }
   };
 
   return (
-    <button
-      onClick={handleCopy}
-      className={`px-3 py-1 text-sm rounded hover:bg-gray-100 ${className}`}
+    <Pressable
+      onPress={handleCopy}
+      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
-      {copied ? '✓ Copied' : 'Copy'}
-    </button>
+      <View className="flex items-center gap-2">
+        {copied ? (
+          <>
+            <Text>✓</Text>
+            <Text>{successMessage}</Text>
+          </>
+        ) : (
+          <>
+            <Text>📋</Text>
+            <Text>{label}</Text>
+          </>
+        )}
+      </View>
+    </Pressable>
   );
-}
-
+};
