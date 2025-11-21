@@ -4,43 +4,33 @@
 
 export interface SplitPaymentDTO {
   id: string;
-  creator: string;
+  initiator: string;
   totalAmount: string;
-  token: TokenInfoDTO;
   recipients: RecipientDTO[];
   status: string;
-  createdAt: string;
-  executedAt?: string;
-  transactionHash?: string;
-  chainId: number;
-  metadata?: PaymentMetadataDTO;
-}
-
-export interface TokenInfoDTO {
-  address: string;
-  symbol: string;
-  decimals: number;
+  createdAt: Date;
 }
 
 export interface RecipientDTO {
   address: string;
-  percentage: number;
   amount: string;
-  ens?: string;
+  percentage: number;
 }
 
-export interface PaymentMetadataDTO {
-  description?: string;
-  reference?: string;
-  tags?: string[];
-}
-
-export interface CreateSplitPaymentRequestDTO {
-  creator: string;
+export interface CreateSplitPaymentDTO {
+  initiator: string;
   totalAmount: string;
-  token: TokenInfoDTO;
   recipients: RecipientDTO[];
-  chainId: number;
-  metadata?: PaymentMetadataDTO;
 }
 
+export interface ExecutePaymentDTO {
+  paymentId: string;
+  signature: string;
+}
+
+export interface PaymentStatusDTO {
+  id: string;
+  status: string;
+  txHash?: string;
+  confirmedAt?: Date;
+}
