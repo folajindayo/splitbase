@@ -401,3 +401,63 @@ MIT License
 
 For more information, visit the [WalletConnect Documentation](https://docs.walletconnect.network/)
 
+## 🎮 Smart Contracts
+
+### PrizePoolEscrow Contract
+
+**Contract Address (Base):** `0xFe3989D74711b1dda30cf4a52F3DE14392185097`
+
+Multi-signature escrow contract for secure hackathon and grant prize management on Base network.
+
+#### Features
+- **Multi-signature approval system** for prize distribution
+- **Support for native tokens (ETH) and ERC20 tokens**
+- **Time-locked emergency withdrawal** mechanism
+- **Role-based access control** (Host, Judge, Admin)
+- **Prize pool creation and management** per event
+- **Batch payouts** for multiple winners
+- **Audit trail** with comprehensive event logging
+- **Dispute resolution** with time-lock protection
+
+#### Key Functions
+- `createPrizePool()` - Create a new prize pool for an event
+- `fundPool()` - Add funds to an existing pool
+- `requestPayout()` - Request prize distribution to winners
+- `approvePayout()` - Multi-sig approval of payout requests
+- `getPoolDetails()` - View pool information
+- `getEventWinners()` - Get list of winners for an event
+
+#### Contract ABI
+The complete ABI is available in [`abi.ts`](./abi.ts) at the project root.
+
+#### Usage Example
+
+```typescript
+import { PRIZE_POOL_ESCROW_ABI, PRIZE_POOL_ESCROW_ADDRESS } from './abi';
+
+// Example: Create a prize pool
+const createPool = async () => {
+  const tx = await contract.createPrizePool(
+    eventId,
+    tokenAddress, // or address(0) for ETH
+    2, // required signatures
+    { value: ethers.parseEther("1.0") }
+  );
+  await tx.wait();
+};
+```
+
+#### Integration Documentation
+
+**📚 Complete Integration Guide**: See [`PRIZE_POOL_INTEGRATION.md`](./PRIZE_POOL_INTEGRATION.md) for:
+- React hook usage (`usePrizePool`)
+- API route documentation
+- Complete code examples
+- Event handling
+- Security best practices
+
+**Integration Files**:
+- `/app/lib/contracts.ts` - Contract function implementations
+- `/app/hooks/usePrizePool.ts` - React hook for UI integration
+- `/app/api/prize-pool/route.ts` - Server-side API endpoint
+

@@ -28,3 +28,4 @@ export const PAYMENT_STATUS_COLORS: Record<string, string> = {
   cancelled: '#6B7280',
 };
 
+

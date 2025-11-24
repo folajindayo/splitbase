@@ -37,3 +37,4 @@ export const CreateSplitPaymentSchema = z.object({
 export type CreateSplitPaymentInput = z.infer<typeof CreateSplitPaymentSchema>;
 export type RecipientInput = z.infer<typeof RecipientSchema>;
 
+

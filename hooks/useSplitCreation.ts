@@ -37,3 +37,4 @@ export function useSplitCreation() {
   return { payment, loading, error, createSplit };
 }
 
+

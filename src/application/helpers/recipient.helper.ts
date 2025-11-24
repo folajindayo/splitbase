@@ -34,3 +34,4 @@ export function optimizeRecipients(recipients: any[]): any[] {
   return [...recipients].sort((a, b) => b.percentage - a.percentage);
 }
 
+

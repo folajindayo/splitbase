@@ -158,3 +158,208 @@ export async function getSplitBalance(
   return formatEther(balance);
 }
 
+// =============================================================================
+// PRIZE POOL ESCROW CONTRACT
+// =============================================================================
+
+// Import the ABI from the root
+import { PRIZE_POOL_ESCROW_ABI, PRIZE_POOL_ESCROW_ADDRESS } from "../../abi";
+
+// Prize Pool status enum
+export enum PoolStatus {
+  Active = 0,
+  Locked = 1,
+  Completed = 2,
+  Cancelled = 3,
+}
+
+// Payout status enum
+export enum PayoutStatus {
+  Pending = 0,
+  Approved = 1,
+  Executed = 2,
+  Rejected = 3,
+}
+
+// Get Prize Pool Escrow contract instance
+export function getPrizePoolContract(
+  signerOrProvider: JsonRpcSigner | BrowserProvider
+): Contract {
+  return new Contract(
+    PRIZE_POOL_ESCROW_ADDRESS,
+    PRIZE_POOL_ESCROW_ABI,
+    signerOrProvider
+  );
+}
+
+// Create a new prize pool
+export async function createPrizePool(
+  signer: JsonRpcSigner,
+  eventId: number,
+  tokenAddress: string, // address(0) for native ETH
+  requiredSignatures: number,
+  initialAmountEth?: string // optional initial funding for native ETH
+): Promise<{ poolId: bigint; txHash: string }> {
+  const contract = getPrizePoolContract(signer);
+  
+  const tx = await contract.createPrizePool(
+    eventId,
+    tokenAddress,
+    requiredSignatures,
+    { value: initialAmountEth ? initialAmountEth : "0" }
+  );
+  const receipt = await tx.wait();
+
+  // Parse the PoolCreated event
+  const event = receipt.logs.find((log: any) => {
+    try {
+      const parsed = contract.interface.parseLog(log);
+      return parsed?.name === "PoolCreated";
+    } catch {
+      return false;
+    }
+  });
+
+  if (!event) {
+    throw new Error("PoolCreated event not found");
+  }
+
+  const parsed = contract.interface.parseLog(event);
+  const poolId = parsed?.args[0];
+
+  return {
+    poolId,
+    txHash: receipt.hash,
+  };
+}
+
+// Fund an existing pool
+export async function fundPrizePool(
+  signer: JsonRpcSigner,
+  poolId: number,
+  amount: string, // For ERC20 tokens
+  amountEth?: string // For native ETH
+): Promise<string> {
+  const contract = getPrizePoolContract(signer);
+  
+  const tx = await contract.fundPool(
+    poolId,
+    amount || "0",
+    { value: amountEth || "0" }
+  );
+  const receipt = await tx.wait();
+  return receipt.hash;
+}
+
+// Request payout from pool
+export async function requestPayout(
+  signer: JsonRpcSigner,
+  poolId: number,
+  recipients: string[],
+  amounts: string[],
+  reason: string
+): Promise<{ payoutId: bigint; txHash: string }> {
+  const contract = getPrizePoolContract(signer);
+  
+  const tx = await contract.requestPayout(poolId, recipients, amounts, reason);
+  const receipt = await tx.wait();
+
+  // Parse the PayoutRequested event
+  const event = receipt.logs.find((log: any) => {
+    try {
+      const parsed = contract.interface.parseLog(log);
+      return parsed?.name === "PayoutRequested";
+    } catch {
+      return false;
+    }
+  });
+
+  if (!event) {
+    throw new Error("PayoutRequested event not found");
+  }
+
+  const parsed = contract.interface.parseLog(event);
+  const payoutId = parsed?.args[0];
+
+  return {
+    payoutId,
+    txHash: receipt.hash,
+  };
+}
+
+// Approve a payout (requires JUDGE_ROLE or ADMIN_ROLE)
+export async function approvePayout(
+  signer: JsonRpcSigner,
+  payoutId: number
+): Promise<string> {
+  const contract = getPrizePoolContract(signer);
+  
+  const tx = await contract.approvePayout(payoutId);
+  const receipt = await tx.wait();
+  return receipt.hash;
+}
+
+// Get pool details
+export async function getPoolDetails(
+  provider: BrowserProvider,
+  poolId: number
+): Promise<{
+  eventId: bigint;
+  host: string;
+  totalAmount: bigint;
+  remainingAmount: bigint;
+  tokenAddress: string;
+  status: PoolStatus;
+  requiredSignatures: bigint;
+}> {
+  const contract = getPrizePoolContract(provider);
+  
+  const details = await contract.getPoolDetails(poolId);
+  
+  return {
+    eventId: details[0],
+    host: details[1],
+    totalAmount: details[2],
+    remainingAmount: details[3],
+    tokenAddress: details[4],
+    status: details[5],
+    requiredSignatures: details[6],
+  };
+}
+
+// Get event winners
+export async function getEventWinners(
+  provider: BrowserProvider,
+  eventId: number
+): Promise<Array<{
+  recipient: string;
+  amount: bigint;
+  rank: bigint;
+  projectName: string;
+  paidAt: bigint;
+}>> {
+  const contract = getPrizePoolContract(provider);
+  
+  const winners = await contract.getEventWinners(eventId);
+  
+  return winners.map((winner: any) => ({
+    recipient: winner.recipient,
+    amount: winner.amount,
+    rank: winner.rank,
+    projectName: winner.projectName,
+    paidAt: winner.paidAt,
+  }));
+}
+
+// Refund pool (only if no payouts made)
+export async function refundPool(
+  signer: JsonRpcSigner,
+  poolId: number
+): Promise<string> {
+  const contract = getPrizePoolContract(signer);
+  
+  const tx = await contract.refundPool(poolId);
+  const receipt = await tx.wait();
+  return receipt.hash;
+}
+
