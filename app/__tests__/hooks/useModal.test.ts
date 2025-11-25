@@ -1,4 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
+
 import { useModal } from "@/hooks/useModal";
 
 describe("useModal", () => {
