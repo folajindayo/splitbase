@@ -1,7 +1,8 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
-import { SplitFactory, SplitBase } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import { ethers } from "hardhat";
+import { expect } from "chai";
+
+import { SplitFactory, SplitBase } from "../typechain-types";
 
 describe("SplitBase", function () {
   let splitFactory: SplitFactory;
