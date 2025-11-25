@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+
 import { handleApiError, createApiResponse } from "@/middleware/errorHandler";
 
 export async function GET(request: NextRequest) {
