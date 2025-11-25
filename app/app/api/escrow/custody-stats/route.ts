@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { JsonRpcProvider } from "ethers";
-import { supabase } from "@/lib/supabase";
+import { NextRequest, NextResponse } from "next/server";
+
 import { getCustodyAuditStats } from "@/lib/custodyAudit";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   try {
