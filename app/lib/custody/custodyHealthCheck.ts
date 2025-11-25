@@ -1,6 +1,7 @@
 import { JsonRpcProvider } from "ethers";
-import { supabase } from "./supabase";
+
 import { decryptPrivateKey } from "./escrowCustody";
+import { supabase } from "./supabase";
 
 export interface HealthCheckResult {
   status: "healthy" | "warning" | "critical";
