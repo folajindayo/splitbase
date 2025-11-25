@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
-import { BrowserProvider, JsonRpcSigner } from "ethers";
 import {
+import { BrowserProvider, JsonRpcSigner } from "ethers";
+import { useState, useCallback } from "react";
+
   createPrizePool,
   fundPrizePool,
   requestPayout,
