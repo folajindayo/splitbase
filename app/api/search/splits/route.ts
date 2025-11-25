@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
-import { splitService } from "@/services/splitService";
-import { searchInObjects } from "@/lib/shared/search";
+
 import { handleApiError, createApiResponse, ApiError } from "@/middleware/errorHandler";
+import { searchInObjects } from "@/lib/shared/search";
+import { splitService } from "@/services/splitService";
 
 export async function GET(request: NextRequest) {
   try {
