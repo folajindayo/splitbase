@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
+
 import { escrowService } from "@/services/escrowService";
-import { searchInObjects } from "@/lib/shared/search";
 import { handleApiError, createApiResponse, ApiError } from "@/middleware/errorHandler";
+import { searchInObjects } from "@/lib/shared/search";
 
 export async function GET(request: NextRequest) {
   try {
