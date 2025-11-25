@@ -1,6 +1,6 @@
-import { dataExporter } from "@/lib/export";
 import { EscrowData } from "@/services/escrowService";
 import { SplitData } from "@/services/splitService";
+import { dataExporter } from "@/lib/export";
 
 describe("Data Exporter", () => {
   const mockEscrows: EscrowData[] = [
