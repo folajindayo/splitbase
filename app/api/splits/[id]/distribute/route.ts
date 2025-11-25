@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
-import { splitService } from "@/services/splitService";
+
 import { handleApiError, createApiResponse, ApiError } from "@/middleware/errorHandler";
+import { splitService } from "@/services/splitService";
 import { validateRequest } from "@/middleware/validation";
 
 export async function POST(
