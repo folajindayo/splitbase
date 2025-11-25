@@ -1,5 +1,5 @@
-import { supabase } from "./supabase";
 import { sendCustodyWebhook } from "./custodyWebhook";
+import { supabase } from "./supabase";
 
 export interface CustodyNotification {
   id?: string;
