@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
-import { notificationService } from "@/services/notificationService";
+
 import { handleApiError, createApiResponse } from "@/middleware/errorHandler";
+import { notificationService } from "@/services/notificationService";
 
 export async function GET(
   request: NextRequest,
