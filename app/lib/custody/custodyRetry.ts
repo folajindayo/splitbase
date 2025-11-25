@@ -1,5 +1,5 @@
-import { supabase } from "./supabase";
 import { logCustodyAudit } from "./custodyAudit";
+import { supabase } from "./supabase";
 
 export interface RetryConfig {
   maxAttempts: number;
