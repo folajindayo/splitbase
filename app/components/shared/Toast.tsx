@@ -1,4 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+
 import { View, Text, Pressable, Animated, Dimensions } from 'react-native';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
