@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
+import * as speakeasy from 'speakeasy';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
