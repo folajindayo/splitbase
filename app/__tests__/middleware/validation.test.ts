@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
-import { validateRequest, ValidationRule } from "@/middleware/validation";
+
 import { ApiError } from "@/middleware/errorHandler";
+import { validateRequest, ValidationRule } from "@/middleware/validation";
 
 describe("Validation Middleware", () => {
   function createMockRequest(body: any): NextRequest {
