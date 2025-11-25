@@ -461,3 +461,71 @@ const createPool = async () => {
 - `/app/hooks/usePrizePool.ts` - React hook for UI integration
 - `/app/api/prize-pool/route.ts` - Server-side API endpoint
 
+## Architecture
+
+This project follows a clean architecture pattern with the following layers:
+
+### Layers
+- **Presentation Layer**: API routes and controllers
+- **Business Logic Layer**: Services and domain logic
+- **Data Access Layer**: Repositories and database interactions
+- **Infrastructure Layer**: External services and utilities
+
+### Design Patterns
+- Dependency Injection for loose coupling
+- Repository pattern for data access
+- Factory pattern for object creation
+- Observer pattern for event handling
+
+### Key Components
+```
+src/
+├── controllers/    # Request handlers
+├── services/       # Business logic
+├── repositories/   # Data access
+├── models/         # Data structures
+├── utils/          # Helper functions
+└── middleware/     # Express middleware
+```
+## Security
+
+### Best Practices Implemented
+- Input validation and sanitization
+- SQL injection prevention
+- XSS protection
+- CSRF tokens
+- Rate limiting
+- Helmet.js security headers
+- JWT authentication
+- Environment variable protection
+
+### Security Headers
+```typescript
+helmet({
+  contentSecurityPolicy: true,
+  xssFilter: true,
+  noSniff: true,
+  ieNoOpen: true,
+})
+```
+## Testing Strategy
+
+### Test Coverage
+- Unit tests for business logic
+- Integration tests for API endpoints
+- End-to-end tests for critical flows
+- Performance tests for scalability
+
+### Running Tests
+```bash
+npm run test          # Run all tests
+npm run test:unit     # Unit tests only
+npm run test:integration  # Integration tests
+npm run test:coverage # Coverage report
+```
+
+### Test Structure
+- AAA pattern (Arrange, Act, Assert)
+- Mocking external dependencies
+- Test fixtures and factories
+- Snapshot testing where appropriate
