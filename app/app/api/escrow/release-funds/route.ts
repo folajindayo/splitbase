@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { JsonRpcProvider, parseEther } from "ethers";
-import { supabase } from "@/lib/supabase";
+import { NextRequest, NextResponse } from "next/server";
+
 import { sendFundsFromEscrow } from "@/lib/escrowCustody";
+import { supabase } from "@/lib/supabase";
 import { updateEscrowStatus, logActivity } from "@/lib/escrow";
 
 export async function POST(req: NextRequest) {
