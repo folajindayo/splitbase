@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
+
 import SplitCard from "@/components/splits/SplitCard";
 
 describe("SplitCard", () => {
