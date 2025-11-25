@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+
 import { Notification, notificationService } from "@/services/notificationService";
 
 interface UseNotificationsResult {
