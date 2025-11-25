@@ -253,3 +253,8 @@ pip-delete-this-directory.txt
 venv/
 ENV/
 env/
+
+# Auto-generated directories
+scripts/
+*.log
+.DS_Store
