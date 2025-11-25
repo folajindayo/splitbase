@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
-import { splitService } from "@/services/splitService";
+
 import { dataExporter } from "@/lib/export";
 import { handleApiError, ApiError } from "@/middleware/errorHandler";
+import { splitService } from "@/services/splitService";
 
 export async function GET(request: NextRequest) {
   try {
