@@ -1,4 +1,5 @@
 import React, { useState, ReactNode } from 'react';
+
 import { View, Text, ScrollView, Pressable, Dimensions } from 'react-native';
 
 interface NavItem {
