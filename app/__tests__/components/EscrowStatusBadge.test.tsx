@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+
 import EscrowStatusBadge from "@/components/escrow/EscrowStatusBadge";
 
 describe("EscrowStatusBadge", () => {
