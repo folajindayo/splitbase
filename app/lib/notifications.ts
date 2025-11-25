@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+
 import { emailTemplates } from './emailTemplates';
 
 const supabase = createClient(
