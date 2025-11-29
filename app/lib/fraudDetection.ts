@@ -933,3 +933,4 @@ export const addToBlacklist = (entry: any) => fraudDetection.addToBlacklist(entr
 export const getFraudAlerts = (filter: any) => fraudDetection.getAlerts(filter);
 export const getFraudStatistics = (days?: number) => fraudDetection.getStatistics(days);
 
+

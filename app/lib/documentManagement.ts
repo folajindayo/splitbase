@@ -893,3 +893,4 @@ export const getDocumentComments = (documentId: string) => documentManagement.ge
 export const addDocumentSignature = (signature: any) => documentManagement.addSignature(signature);
 export const getDocumentAnalytics = () => documentManagement.getAnalytics();
 
+

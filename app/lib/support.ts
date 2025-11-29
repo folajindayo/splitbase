@@ -856,3 +856,4 @@ export const searchKnowledgeBase = (query: string, limit?: number) => support.se
 export const submitCustomerSatisfaction = (satisfaction: any) => support.submitSatisfaction(satisfaction);
 export const getSupportAnalytics = (days?: number) => support.getAnalytics(days);
 
+

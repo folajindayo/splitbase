@@ -1048,3 +1048,4 @@ export const addExperience = (userId: string, amount: number) => gamification.ad
 export const updateStreak = (userId: string, type: string) => gamification.updateStreak(userId, type);
 export const getLeaderboard = (leaderboardId: string, limit?: number) => gamification.getLeaderboard(leaderboardId, limit);
 
+

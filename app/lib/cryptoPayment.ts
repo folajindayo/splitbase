@@ -870,3 +870,4 @@ export const estimateGasFee = (network: CryptoNetwork, type?: 'slow' | 'standard
   cryptoPayment.estimateGas(network, type);
 export const getCryptoAnalytics = (days?: number) => cryptoPayment.getAnalytics(days);
 
+
